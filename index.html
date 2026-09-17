@@ -73,9 +73,9 @@
   }
   .topbar-calbtn:active{background:var(--panel-2);}
 
-  .notify{display:flex; align-items:center; gap:10px; background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--amber); border-radius:var(--radius); padding:12px 14px; margin-bottom:16px; cursor:pointer;}
+  .notify{display:flex; align-items:center; gap:10px; background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--text); border-radius:var(--radius); padding:12px 14px; margin-bottom:16px; cursor:pointer;}
   .notify:active{background:var(--panel-2);}
-  .notify-dot{width:8px;height:8px;border-radius:50%; background:var(--amber); flex:none; box-shadow:0 0 7px 1px rgba(0,156,222,0.5);}
+  .notify-dot{width:8px;height:8px;border-radius:50%; background:var(--text); flex:none;}
   .notify-body{flex:1; min-width:0;}
   .notify-title{font-size:13px; font-weight:700;}
   .notify-text{font-size:12.5px; color:var(--text-dim); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
@@ -279,11 +279,11 @@
   }
   .card:active{background:var(--panel-2);}
   .dot{width:10px;height:10px;border-radius:50%; flex:none; margin-top:4px;}
-  .dot.pre{background:var(--pre); box-shadow:0 0 7px 1px rgba(201,130,30,0.55);}
-  .dot.prod{background:var(--out); box-shadow:0 0 7px 1px rgba(214,0,28,0.55);}
-  .dot.post{background:var(--amber); box-shadow:0 0 7px 1px rgba(0,156,222,0.55);}
-  .dot.wrap{background:var(--in); box-shadow:0 0 7px 1px rgba(39,93,56,0.55);}
-  .dot.wip{background:var(--yellow); box-shadow:0 0 7px 1px rgba(217,164,4,0.55);}
+  .dot.pre{background:var(--pre);}
+  .dot.prod{background:var(--out);}
+  .dot.post{background:var(--amber);}
+  .dot.wrap{background:var(--in);}
+  .dot.wip{background:var(--yellow);}
   .dot.none{background:var(--text-dim); box-shadow:none;}
   .dot.blank{background:transparent; box-shadow: inset 0 0 0 2px var(--text-dim);}
   .card-body{flex:1; min-width:0;}
@@ -688,8 +688,8 @@
   }
   .card:active{background:var(--panel-2);}
   .dot{width:10px;height:10px;border-radius:50%; flex:none;}
-  .dot.in{background:var(--in); box-shadow:0 0 7px 1px rgba(39,93,56,0.55);}
-  .dot.out{background:var(--out); box-shadow:0 0 7px 1px rgba(214,0,28,0.55);}
+  .dot.in{background:var(--in);}
+  .dot.out{background:var(--out);}
   .card-body{flex:1; min-width:0;}
   .table-row{
     display:flex; align-items:flex-start; gap:12px; padding:14px 0;
@@ -838,6 +838,8 @@
   .board-mini-row.current{border-color:var(--amber); background:var(--panel-2);}
   .board-mini-row .ts{display:block; font-family:var(--mono); font-size:10.5px; color:var(--text-dim); margin-top:2px;}
   .preset-row{display:flex; gap:8px; margin-bottom:16px;}
+  .loc-filter-row{display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;}
+  .loc-filter-pill{display:flex; align-items:center; gap:6px;}
 
   .field-check{display:flex; align-items:center; gap:8px; font-size:13px; margin-top:4px;}
   .modal-actions{display:flex; gap:8px; margin-top:16px;}
@@ -2541,10 +2543,10 @@ function renderList(app, tab){
     ${renderHeader('projects')}
     ${renderNotifyBanner()}
     <div class="toolbar">
-      <button class="btn primary" id="addBtn">+ New Project</button>
       ${searchOpen
         ? `<input type="search" id="searchBox" placeholder="Search projects…" value="${esc(app.dataset.search||'')}">`
         : `<button class="sq-btn" id="searchToggle" aria-label="Search">&#128269;</button>`}
+      <button class="btn primary round-add" id="addBtn" aria-label="New project" title="New project">+</button>
     </div>
     <div class="section-label"><span>Projects (${current.length})</span></div>
     ${current.length ? current.map(p => cardHtml(p, 'current')).join('') : `<div class="card-sub" style="margin-bottom:14px; font-family:var(--mono); font-size:11px; color:var(--text-dim);">Nothing in progress — start a project.</div>`}
@@ -7664,15 +7666,23 @@ function renderGearCalendar(app){
 function gearRenderList(app){
   const search = (app.dataset.search || '').toLowerCase();
   const preset = app.dataset.preset || '';
+  const locFilter = app.dataset.locFilter || '';
   const presetNames = GEAR_PRESETS[preset] || null;
   const fullList = topLevel();
   const studioCount = fullList.filter(i => effectiveLocation(i) === HOME_BASE).length;
   const rentalCount = fullList.filter(i => effectiveLocation(i) === 'Rental').length;
   const projectCount = fullList.filter(i => effectiveLocation(i) === 'Used in Project').length;
+  const locMatches = (i) => {
+    if(!locFilter) return true;
+    if(locFilter === 'studio') return effectiveLocation(i) === HOME_BASE;
+    if(locFilter === 'rental') return effectiveLocation(i) === 'Rental';
+    if(locFilter === 'project') return effectiveLocation(i) === 'Used in Project';
+    return true;
+  };
   // presets can name items bundled inside a crate (not "top level"), so search everything rather
   // than just tracked/top-level entities when a preset is active
   const base = presetNames ? ENTITIES.filter(e => presetNames.includes(e.name)) : topLevel();
-  const all = base.filter(i => !search || i.name.toLowerCase().includes(search) || i.category.toLowerCase().includes(search));
+  const all = base.filter(i => (!search || i.name.toLowerCase().includes(search) || i.category.toLowerCase().includes(search)) && locMatches(i));
   const crates = all.filter(i => i.type === 'crate').sort((a,b) => new Date(effectiveUpdatedAt(b)) - new Date(effectiveUpdatedAt(a)));
   const loose = all.filter(i => i.type !== 'crate'); // tracked items not sitting in any crate
 
@@ -7691,6 +7701,12 @@ function gearRenderList(app){
       <input type="search" id="searchBox" placeholder="Search gear…" value="${esc(app.dataset.search||'')}">
       <button class="btn icon-btn" id="refreshBtn" style="padding:11px 13px; font-size:16px;">↻</button>
       <button class="btn primary round-add" id="addBtn" aria-label="Add item" title="Add item">+</button>
+    </div>
+    <div class="loc-filter-row">
+      <button class="btn small pill-outline ${!locFilter?'active':''}" data-locfilter="">all ${fullList.length}</button>
+      <button class="btn small pill-outline loc-filter-pill ${locFilter==='studio'?'active':''}" data-locfilter="studio"><span class="dot in" style="margin:0;"></span>studio ${studioCount}</button>
+      <button class="btn small pill-outline loc-filter-pill ${locFilter==='rental'?'active':''}" data-locfilter="rental"><span class="dot wip" style="margin:0;"></span>rental ${rentalCount}</button>
+      <button class="btn small pill-outline loc-filter-pill ${locFilter==='project'?'active':''}" data-locfilter="project"><span class="dot out" style="margin:0;"></span>project ${projectCount}</button>
     </div>
     <div class="preset-row">
       <span style="font-family:var(--display); font-size:13px; color:var(--text-dim); flex:none; align-self:center;">kits</span>
@@ -7717,6 +7733,12 @@ function gearRenderList(app){
   document.querySelectorAll('[data-preset]').forEach(btn => {
     btn.addEventListener('click', () => {
       app.dataset.preset = btn.dataset.preset;
+      gearRenderList(app);
+    });
+  });
+  document.querySelectorAll('[data-locfilter]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      app.dataset.locFilter = btn.dataset.locfilter;
       gearRenderList(app);
     });
   });
