@@ -178,6 +178,10 @@
   .sched-item{display:flex; align-items:baseline; justify-content:space-between; gap:8px; background:var(--bg); border:1px solid var(--line); border-radius:6px; padding:7px 10px;}
   .sched-item.sched-clickable{cursor:pointer;}
   .sched-item.sched-clickable:hover, .sched-item.sched-open{border-color:var(--text);}
+  .doc-row{display:flex; flex-direction:column; gap:6px; background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:8px; margin-bottom:8px;}
+  .an-progress{height:6px; background:var(--panel-2); border-radius:999px; overflow:hidden;}
+  .an-progress > div{height:100%; background:var(--text); transition:width .15s;}
+  .an-sql{font-family:var(--mono); font-size:11px; background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:10px; white-space:pre-wrap; margin:8px 0; overflow-x:auto;}
   .sched-edit-box{background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:8px 10px; margin-top:6px;}
   .sched-item.sched-lunch{background:rgba(217,164,4,0.12); border-color:var(--yellow); border-style:dashed;}
   .sched-item.sched-drive{background:rgba(9,124,124,0.1); border-color:var(--in);}
@@ -625,16 +629,15 @@
   .loading{padding:60px 20px; text-align:center; color:var(--text-dim); font-family:var(--mono); font-size:13px;}
 
   .bottomnav{
-    position:sticky; bottom:0; left:0; right:0; margin:24px -16px 0;
-    background:var(--bg); border-top:1px solid var(--line); display:flex; z-index:15;
-    padding-bottom: env(safe-area-inset-bottom, 0);
+    position:sticky; bottom:calc(14px + env(safe-area-inset-bottom, 0)); margin:24px auto 0; max-width:420px;
+    display:flex; gap:2px; padding:5px; z-index:15;
+    background:var(--panel); border:1px solid var(--line); border-radius:999px; box-shadow:0 4px 18px rgba(0,0,0,0.08);
   }
   .navtab{
-    flex:1; background:none; border:none; padding:11px 4px 9px; cursor:pointer;
-    font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-dim);
-    border-top:2px solid transparent; margin-top:-1px; line-height:1.3;
+    flex:1; background:none; border:none; padding:8px 10px; cursor:pointer; border-radius:999px; text-align:center;
+    font-family:var(--display); font-size:13.5px; font-weight:500; color:var(--text-dim);
   }
-  .navtab.active{color:var(--text); font-weight:700; border-top-color:var(--amber);}
+  .navtab.active{background:var(--panel); color:var(--text); font-weight:600; box-shadow:0 0 0 1px var(--line);}
 
   #printBudget{display:none;}
   @media print{
@@ -924,6 +927,7 @@
   const SUPABASE_URL = 'https://bpaipvdivzyqzvyiqrra.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwYWlwdmRpdnp5cXp2eWlxcnJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkyODYyOTEsImV4cCI6MjEwNDg2MjI5MX0.Eb-H2c6wwyk1n9QjzZHaIXKppanWBs9ZvOWGqkJV4EE';
   const REST_URL = SUPABASE_URL + '/rest/v1/kv_store';
+  window.__supabase = { url: SUPABASE_URL, key: SUPABASE_ANON_KEY }; // reused by file uploads (Supabase Storage)
   const baseHeaders = {
     'apikey': SUPABASE_ANON_KEY,
     'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
@@ -1975,6 +1979,82 @@ function openInviteModal(project){
   });
 }
 
+// one place for every link tied to a project (brief docs, spreadsheets, folders, contracts…) — saves as you type
+function openDocumentsModal(project){
+  if(document.querySelector('.modal-bg[data-docs="1"]')){ closeSidePanels(); return; }
+  closeSidePanels();
+  if(!project.documents) project.documents = [];
+  const bg = document.createElement('div');
+  bg.className = 'modal-bg side-right';
+  bg.dataset.docs = '1';
+  const normUrl = u => { u = (u||'').trim(); return (u && !/^[a-z][a-z0-9+.-]*:/i.test(u)) ? 'https://' + u : u; };
+  const safeHref = u => /^(https?:|mailto:)/i.test(u) ? u : '';
+  function hostOf(u){ try{ return new URL(u).hostname.replace(/^www\./,''); }catch(e){ return ''; } }
+
+  async function persist(){
+    touchProject(project);
+    const ok = await saveProjects();
+    if(!ok) showToast('Save failed — try again', true);
+  }
+  function paint(){
+    const prev = bg.querySelector('.modal');
+    const scrollTop = prev ? prev.scrollTop : 0;
+    bg.innerHTML = `
+      <div class="modal">
+        <h3>Documents</h3>
+        <div class="timeline-hint">Paste links to everything for ${esc(project.name)} — Google Docs and Sheets, Drive folders, contracts, references.</div>
+        ${project.documents.length ? project.documents.map(d => `
+          <div class="doc-row" data-docid="${d.id}">
+            <input type="text" class="sl-input" data-docfield="label" data-docid="${d.id}" value="${esc(d.label||'')}" placeholder="Name, e.g. Shot list sheet">
+            <div style="display:flex; gap:6px; align-items:center;">
+              <input type="text" class="sl-input" data-docfield="url" data-docid="${d.id}" value="${esc(d.url||'')}" placeholder="Paste link" style="flex:1; min-width:0;">
+              ${safeHref(d.url) ? `<a class="btn small" href="${esc(safeHref(d.url))}" target="_blank" rel="noopener noreferrer" title="Open link">Open</a>` : ''}
+              <button type="button" class="mo-btn" data-removedoc="${d.id}" aria-label="Remove link">&times;</button>
+            </div>
+          </div>`).join('') : `<p class="empty small">No documents yet.</p>`}
+        <button type="button" class="btn small" id="docAdd" style="width:100%; margin-top:8px;">+ Add link</button>
+        <div class="modal-actions">
+          <button class="btn primary" id="docClose" style="flex:1;">Close</button>
+        </div>
+      </div>`;
+    const m = bg.querySelector('.modal');
+    if(m) m.scrollTop = scrollTop;
+    wire();
+  }
+  function wire(){
+    bg.querySelector('#docAdd').addEventListener('click', () => {
+      project.documents.push({ id: uid(), label:'', url:'' });
+      paint();
+      const inputs = bg.querySelectorAll('[data-docfield="label"]');
+      if(inputs.length) inputs[inputs.length-1].focus();
+    });
+    bg.querySelector('#docClose').addEventListener('click', () => { bg.remove(); render(); });
+    bg.querySelectorAll('[data-removedoc]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        project.documents = project.documents.filter(d => d.id !== btn.dataset.removedoc);
+        paint();
+        persist();
+      });
+    });
+    bg.querySelectorAll('[data-docfield]').forEach(el => {
+      const d = project.documents.find(x => x.id === el.dataset.docid);
+      if(!d) return;
+      el.addEventListener('input', () => { d[el.dataset.docfield] = el.value; });
+      el.addEventListener('change', () => {
+        if(el.dataset.docfield === 'url'){
+          d.url = normUrl(el.value);
+          if(!d.label.trim()) d.label = hostOf(d.url);
+          paint(); // shows the Open button; the name box doesn't repaint so tabbing between boxes keeps focus
+        }
+        persist();
+      });
+    });
+  }
+  bg.addEventListener('click', ev => { if(ev.target === bg){ bg.remove(); render(); } });
+  presentPanel(bg, null);
+  paint();
+}
+
 function globalLatestNote(){
   let latest = null, proj = null;
   PROJECTS.forEach(p => {
@@ -2368,6 +2448,7 @@ function renderBoardProjectPicker(app){
     <div class="card" data-openboard="${p.id}" style="cursor:pointer;">
       <div class="dot ${projectDotClass(p)}"></div>
       <div class="card-body"><div class="name">${esc(p.name)}</div></div>
+      <button type="button" class="mo-btn" data-boardanimatic="${p.id}" title="${p.animatic ? 'Play or replace animatic' : 'Upload animatic'}" aria-label="Animatic" style="${p.animatic ? 'color:var(--text);' : 'color:var(--text-dim);'}">${BOARD_ICONS.animatic}</button>
       <button type="button" class="dot-btn" data-boarddoneproj="${p.id}" title="Mark storyboards done" aria-label="Mark storyboards done"><span class="dot ${p.storyboardsDone?'wrap':'blank'}" style="margin-top:0;"></span></button>
     </div>`;
   app.innerHTML = `
@@ -2383,6 +2464,13 @@ function renderBoardProjectPicker(app){
   `;
   app.querySelectorAll('[data-openboard]').forEach(el => {
     el.addEventListener('click', () => goBoardProject(el.dataset.openboard, 0));
+  });
+  app.querySelectorAll('[data-boardanimatic]').forEach(btn => {
+    btn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      const p = byId(btn.dataset.boardanimatic);
+      if(p) openAnimaticModal(p, () => renderBoardProjectPicker(app));
+    });
   });
   app.querySelectorAll('[data-boarddoneproj]').forEach(btn => {
     btn.addEventListener('click', async (ev) => {
@@ -2405,6 +2493,7 @@ const BOARD_ICONS = {
   shotlist: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round"/></svg>',
   equipment: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="3" width="8" height="6" rx="1.5"/><circle cx="12" cy="6" r="1.1" fill="currentColor" stroke="none"/><path d="M12 9v4"/><path d="M12 13 5 21"/><path d="M12 13v8"/><path d="M12 13 19 21"/></svg>',
   lighting: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.4 1 2.5h6c0-1.1.4-1.9 1-2.5A6 6 0 0 0 12 3z"/></svg>',
+  animatic: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M10 9.5v5l4.5-2.5z"/></svg>',
   check: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3"><path d="M4 12l5 5L20 6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
 };
 // small popup used for the Scene/Camera filter pickers in the storyboard viewer
@@ -2452,6 +2541,139 @@ function computeShotTimeSlot(project, shot){
   };
   return { startDate: toDate(item.startMin + perShot * idxInScene), endDate: toDate(item.startMin + perShot * (idxInScene + 1)) };
 }
+// ---------- animatic: one uploaded video per project, kept in a Supabase Storage bucket ----------
+// (videos are far too big for the key-value table the rest of the app uses). One-time setup in the
+// Supabase SQL editor is needed — the upload box shows the exact SQL if the bucket isn't there yet.
+const ANIMATIC_BUCKET = 'animatics';
+const ANIMATIC_SETUP_SQL = `insert into storage.buckets (id, name, public)
+values ('animatics', 'animatics', true)
+on conflict (id) do nothing;
+
+create policy "animatics read" on storage.objects for select using (bucket_id = 'animatics');
+create policy "animatics upload" on storage.objects for insert with check (bucket_id = 'animatics');
+create policy "animatics update" on storage.objects for update using (bucket_id = 'animatics');
+create policy "animatics delete" on storage.objects for delete using (bucket_id = 'animatics');`;
+function animaticObjectPath(path){ return path.split('/').map(encodeURIComponent).join('/'); }
+function animaticPublicUrl(path){ return `${window.__supabase.url}/storage/v1/object/public/${ANIMATIC_BUCKET}/${animaticObjectPath(path)}`; }
+// XMLHttpRequest rather than fetch so the upload can report progress
+function uploadAnimaticFile(file, path, onProgress){
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${window.__supabase.url}/storage/v1/object/${ANIMATIC_BUCKET}/${animaticObjectPath(path)}`);
+    xhr.setRequestHeader('apikey', window.__supabase.key);
+    xhr.setRequestHeader('Authorization', 'Bearer ' + window.__supabase.key);
+    xhr.setRequestHeader('x-upsert', 'true');
+    xhr.setRequestHeader('Content-Type', file.type || 'video/mp4');
+    xhr.upload.onprogress = (ev) => { if(ev.lengthComputable && onProgress) onProgress(ev.loaded / ev.total); };
+    xhr.onload = () => (xhr.status >= 200 && xhr.status < 300) ? resolve() : reject({ status: xhr.status, body: xhr.responseText || '' });
+    xhr.onerror = () => reject({ status: 0, body: '' });
+    xhr.send(file);
+  });
+}
+async function deleteAnimaticFile(path){
+  try{
+    await fetch(`${window.__supabase.url}/storage/v1/object/${ANIMATIC_BUCKET}/${animaticObjectPath(path)}`, {
+      method: 'DELETE',
+      headers: { 'apikey': window.__supabase.key, 'Authorization': 'Bearer ' + window.__supabase.key },
+    });
+  }catch(e){ /* an orphaned file is harmless */ }
+}
+function openAnimaticModal(project, onChange){
+  document.querySelectorAll('.modal-bg[data-animatic="1"]').forEach(el => el.remove());
+  const bg = document.createElement('div');
+  bg.className = 'modal-bg';
+  bg.dataset.animatic = '1';
+  let busy = false, progress = 0, error = null; // error: { kind:'setup'|'size'|'other', text }
+  const fmtSize = n => n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
+
+  function paint(){
+    const a = project.animatic;
+    bg.innerHTML = `
+      <div class="modal">
+        <h3>Animatic</h3>
+        <div style="font-family:var(--mono); font-size:10.5px; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-dim); margin-bottom:10px;">${esc(project.name)}</div>
+        ${a ? `
+          <video id="anVideo" controls playsinline preload="metadata" src="${esc(a.url)}" style="width:100%; max-height:60vh; background:#000; border-radius:8px;"></video>
+          <div class="timeline-hint" style="margin-top:6px;">${esc(a.name || 'animatic')} · ${esc(fmtSize(a.size || 0))} · uploaded ${esc(timeAgo(a.uploadedAt))}${a.uploadedBy ? ' by ' + esc(a.uploadedBy) : ''}</div>
+        ` : `<p class="empty small">No animatic uploaded yet. Upload an exported video (MP4 works best) to play it from here.</p>`}
+        ${busy ? `<div class="an-progress" style="margin:10px 0;"><div id="anBar" style="width:${Math.round(progress*100)}%;"></div></div><div class="timeline-hint" id="anPct">Uploading… ${Math.round(progress*100)}%</div>` : ''}
+        ${error && error.kind === 'setup' ? `
+          <div class="timeline-hint" style="color:var(--out); margin-top:10px;">The video storage isn't set up yet. Paste this into the Supabase SQL editor and run it once, then try again:</div>
+          <pre class="an-sql" id="anSql">${esc(ANIMATIC_SETUP_SQL)}</pre>
+          <button type="button" class="btn small" id="anCopy">Copy SQL</button>` : ''}
+        ${error && error.kind !== 'setup' ? `<div class="timeline-hint" style="color:var(--out); margin-top:10px;">${esc(error.text)}</div>` : ''}
+        <input type="file" id="anFile" accept="video/*" style="display:none;">
+        <div class="modal-actions">
+          <button class="btn ghost" id="anClose" style="flex:1;">Close</button>
+          <button class="btn primary" id="anPick" style="flex:1;" ${busy ? 'disabled' : ''}>${a ? 'Replace video' : 'Upload video'}</button>
+        </div>
+        ${a && !busy ? `<button class="btn danger small" id="anRemove" style="margin-top:10px;">Remove animatic</button>` : ''}
+      </div>`;
+    wire();
+  }
+
+  async function startUpload(file){
+    if(!file) return;
+    if(!(file.type || '').startsWith('video/')){ error = { kind:'other', text:'That file is not a video.' }; paint(); return; }
+    busy = true; progress = 0; error = null; paint();
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, '-');
+    const path = `${project.id}/${Date.now()}-${safeName}`;
+    try{
+      await uploadAnimaticFile(file, path, (f) => {
+        progress = f;
+        const bar = bg.querySelector('#anBar'), pct = bg.querySelector('#anPct');
+        if(bar) bar.style.width = Math.round(f*100) + '%';
+        if(pct) pct.textContent = 'Uploading… ' + Math.round(f*100) + '%';
+      });
+      const old = project.animatic;
+      project.animatic = { path, url: animaticPublicUrl(path), name: file.name, size: file.size, uploadedAt: new Date().toISOString(), uploadedBy: getContributorName() || '' };
+      touchProject(project);
+      const ok = await saveProjects();
+      if(old && old.path) deleteAnimaticFile(old.path);
+      busy = false;
+      if(!ok) error = { kind:'other', text:'The video uploaded but saving failed — try again.' };
+      else showToast('Animatic uploaded');
+      paint();
+      if(onChange) onChange();
+    }catch(e){
+      busy = false;
+      const body = (e && e.body) || '';
+      if(e && (e.status === 404 || /bucket not found|row-level security|unauthorized|not found/i.test(body))) error = { kind:'setup' };
+      else if(e && (e.status === 413 || /exceeded|too large|maximum allowed/i.test(body))) error = { kind:'size', text:`That video is too big for your Supabase plan (${fmtSize(file.size)}). The free plan allows 50 MB per file — export a smaller H.264 MP4, or raise the limit in Supabase → Storage settings.` };
+      else error = { kind:'other', text: e && e.status === 0 ? 'Upload failed — check your connection and try again.' : `Upload failed (${e && e.status}). ${body.slice(0, 120)}` };
+      paint();
+    }
+  }
+
+  function wire(){
+    bg.querySelector('#anClose').addEventListener('click', () => bg.remove());
+    const fileEl = bg.querySelector('#anFile');
+    bg.querySelector('#anPick').addEventListener('click', () => fileEl.click());
+    fileEl.addEventListener('change', () => startUpload(fileEl.files[0]));
+    const copy = bg.querySelector('#anCopy');
+    if(copy) copy.addEventListener('click', async () => {
+      try{ await navigator.clipboard.writeText(ANIMATIC_SETUP_SQL); showToast('SQL copied'); }
+      catch(e){ const r = document.createRange(); r.selectNodeContents(bg.querySelector('#anSql')); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); showToast('Press Ctrl/Cmd+C to copy'); }
+    });
+    const rm = bg.querySelector('#anRemove');
+    if(rm) rm.addEventListener('click', () => {
+      openConfirmModal('Remove this animatic video? The file is deleted for everyone.', async () => {
+        const old = project.animatic;
+        delete project.animatic;
+        touchProject(project);
+        const ok = await saveProjects();
+        if(old && old.path) deleteAnimaticFile(old.path);
+        showToast(ok ? 'Animatic removed' : 'Save failed', !ok);
+        paint();
+        if(onChange) onChange();
+      });
+    });
+  }
+  bg.addEventListener('click', ev => { if(ev.target === bg && !busy) bg.remove(); });
+  document.body.appendChild(bg);
+  paint();
+}
+
 function formatBoardCountdown(ms){
   const sign = ms < 0 ? '−' : '';
   ms = Math.abs(ms);
@@ -2546,6 +2768,7 @@ function renderBoardShotViewer(app, project, shotIdx){
           <button type="button" class="board-tool-btn ${openPanel==='shotlist'?'active':''}" data-boardtool="shotlist" title="Shot list">${BOARD_ICONS.shotlist}</button>
           <button type="button" class="board-tool-btn ${openPanel==='equipment'?'active':''}" data-boardtool="equipment" title="Equipment">${BOARD_ICONS.equipment}</button>
           <button type="button" class="board-tool-btn ${openPanel==='lighting'?'active':''}" data-boardtool="lighting" title="Lighting">${BOARD_ICONS.lighting}</button>
+          <button type="button" class="board-tool-btn" data-boardtool="animatic" title="Animatic">${BOARD_ICONS.animatic}</button>
         </div>
       </div>
     </div>
@@ -2600,6 +2823,7 @@ function renderBoardShotViewer(app, project, shotIdx){
   app.querySelectorAll('[data-boardtool]').forEach(btn => {
     btn.addEventListener('click', () => {
       const tool = btn.dataset.boardtool;
+      if(tool === 'animatic'){ openAnimaticModal(project); return; }
       app.dataset.boardPanel = (openPanel === tool) ? '' : tool;
       renderBoardShotViewer(app, project, shotIdx);
     });
@@ -2706,10 +2930,10 @@ function renderList(app, tab){
     ${renderHeader('projects')}
     ${renderNotifyBanner()}
     <div class="toolbar">
+      <button class="btn primary round-add" id="addBtn" aria-label="New project" title="New project">+</button>
       ${searchOpen
         ? `<input type="search" id="searchBox" placeholder="Search projects…" value="${esc(app.dataset.search||'')}">`
         : `<button class="sq-btn" id="searchToggle" aria-label="Search"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></button>`}
-      <button class="btn primary round-add" id="addBtn" aria-label="New project" title="New project">+</button>
     </div>
     <div class="section-label"><span>Projects (${current.length})</span></div>
     ${current.length ? current.map(p => cardHtml(p, 'current')).join('') : `<div class="card-sub" style="margin-bottom:14px; font-family:var(--mono); font-size:11px; color:var(--text-dim);">Nothing in progress — start a project.</div>`}
@@ -3040,6 +3264,11 @@ function renderDetail(app, p){
       </div>
     </details>
 
+    <div class="contents-row" id="docsRow" role="button" tabindex="0" style="cursor:pointer; margin-top:12px;">
+      <div class="name">Documents<small>${(p.documents||[]).length ? (p.documents.length + ' link' + (p.documents.length===1?'':'s')) : 'Keep every link for this project in one place'}</small></div>
+      <div class="step-actions"><span style="font-size:18px; color:var(--text-dim);">&rsaquo;</span></div>
+    </div>
+
     ${totalHidden ? `<button class="btn-text" id="toggleHiddenBtn" style="margin-top:8px;">${showHidden ? 'Hide' : 'Show'} ${totalHidden} hidden step${totalHidden>1?'s':''}</button>` : ''}
     ${stageSections}
 
@@ -3050,6 +3279,9 @@ function renderDetail(app, p){
   document.getElementById('backBtn').addEventListener('click', () => goTab(p.status));
   document.getElementById('projCalBtn').addEventListener('click', () => goProjectCalendar(p.id));
   document.getElementById('inviteBtn').addEventListener('click', () => openInviteModal(p));
+  const docsRow = document.getElementById('docsRow');
+  docsRow.addEventListener('click', () => openDocumentsModal(p));
+  docsRow.addEventListener('keydown', ev => { if(ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); openDocumentsModal(p); } });
   document.getElementById('renameBtn').addEventListener('click', () => openEditProjectModal(p));
   const ackDetailBtn = document.getElementById('ackDetailNote');
   if(ackDetailBtn) ackDetailBtn.addEventListener('click', async () => {
@@ -3079,7 +3311,7 @@ function renderDetail(app, p){
       else if(isEquipmentListsStep(step)) openEquipmentListsModal(p, step, true);
       else if(isBoardingStep(step)) openPerShotImagesModal(p, step, true, shotBoardKey, 'Storyboard images');
       else if(isLightingStep(step)) openPerShotImagesModal(p, step, true, shotLightKey, 'Lighting plan images');
-      else openStepModal(p, step, null, true);
+      else openStepNotesPanel(p, step, true);
     });
   });
   document.querySelectorAll('[data-donedot]').forEach(btn => {
@@ -6602,6 +6834,10 @@ function openEquipmentPickerModal(day, currentSelections, onSave){
   }
 
   function paint(){
+    const prevModal = bg.querySelector('.modal');
+    const prevScroll = prevModal ? prevModal.scrollTop : 0;
+    const prevList = bg.querySelector('.eq-pick-list');
+    const prevListScroll = prevList ? prevList.scrollTop : 0;
     const search = (bg.dataset.search || '').toLowerCase();
     const filtered = allItems.filter(e => !search || e.name.toLowerCase().includes(search) || (e.category||'').toLowerCase().includes(search));
     const crates = filtered.filter(e => e.type === 'crate');
@@ -6636,6 +6872,10 @@ function openEquipmentPickerModal(day, currentSelections, onSave){
           <button class="btn primary" id="eqSave" style="flex:1;">Done</button>
         </div>
       </div>`;
+    const newModal = bg.querySelector('.modal');
+    if(newModal) newModal.scrollTop = prevScroll;
+    const newList = bg.querySelector('.eq-pick-list');
+    if(newList) newList.scrollTop = prevListScroll;
     const searchBox = bg.querySelector('#eqSearch');
     searchBox.addEventListener('input', ev => {
       bg.dataset.search = ev.target.value;
@@ -7659,6 +7899,79 @@ function openBriefModal(project, step, sideRight){
   });
 }
 
+// what a step opens to by default: its title, key details and a notes box that saves as you type.
+// Checklist and dated steps also show their items here; the cog still opens the full edit panel.
+function openStepNotesPanel(project, step, sideRight){
+  closeSidePanels();
+  const bg = document.createElement('div');
+  bg.className = 'modal-bg' + (sideRight ? ' side-right' : '');
+  const type = step.stepType || 'standard';
+  const range = (step.startDate && step.endDate && step.startDate !== step.endDate)
+    ? `${fmtDate(step.startDate)} – ${fmtDate(step.endDate)}`
+    : (stepDeadline(step) ? fmtDate(stepDeadline(step)) : 'No date');
+  const meta = [stageLabel(step.stage), step.who, range].filter(Boolean).map(esc).join(' · ');
+  let items = '';
+  if(type === 'checklist'){
+    const list = step.checklistItems || [];
+    items = `<div class="loc-label">Checklist</div>` + (list.length ? list.map(i => `
+      <div class="checklist-row">
+        <input type="checkbox" data-snctick="${i.id}" ${i.checked ? 'checked' : ''}>
+        <span style="flex:1;">${esc(i.text || '')}</span>
+      </div>`).join('') : `<div class="timeline-hint">No items yet — add them from Edit details.</div>`);
+  } else if(type === 'dated'){
+    const list = (step.datedItems || []).slice().sort((a,b) => (a.date||'').localeCompare(b.date||''));
+    items = `<div class="loc-label">Dates</div>` + (list.length ? list.map(i => `
+      <div class="sched-item" style="margin-bottom:6px;"><div class="sched-item-scene" style="white-space:normal;">${esc(i.description || 'Untitled')}</div><div class="sched-item-meta">${i.date ? esc(fmtDate(i.date)) : 'No date'}</div></div>`).join('') : `<div class="timeline-hint">No dates yet — add them from Edit details.</div>`);
+  }
+  bg.innerHTML = `
+    <div class="modal">
+      <h3>${esc(step.title || 'Untitled step')}</h3>
+      <div style="font-family:var(--mono); font-size:10.5px; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-dim); margin-bottom:10px;">${meta}</div>
+      ${step.description ? `<div class="timeline-hint" style="white-space:pre-wrap;">${esc(step.description)}</div>` : ''}
+      ${items}
+      <div class="field" style="margin-top:12px;"><label>Notes</label>
+        <textarea id="snNotes" rows="8" placeholder="Write anything about this step…">${esc(step.notes || '')}</textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn ghost" id="snEdit" style="flex:1;">Edit details</button>
+        <button class="btn primary" id="snClose" style="flex:1;">Close</button>
+      </div>
+    </div>`;
+  presentPanel(bg, step.id);
+  autoGrowAll(bg);
+  const ta = bg.querySelector('#snNotes');
+  let lastSaved = step.notes || '';
+  let timer = null;
+  async function flush(){
+    clearTimeout(timer); timer = null;
+    if(ta.value === lastSaved) return true;
+    lastSaved = ta.value;
+    step.notes = ta.value;
+    touchStep(step);
+    touchProject(project);
+    const ok = await saveProjects();
+    if(!ok) showToast('Save failed — try again', true);
+    return ok;
+  }
+  ta.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(flush, 800); });
+  ta.addEventListener('blur', flush);
+  bg.querySelectorAll('[data-snctick]').forEach(cb => {
+    cb.addEventListener('change', async () => {
+      const item = (step.checklistItems || []).find(i => i.id === cb.dataset.snctick);
+      if(!item) return;
+      item.checked = cb.checked;
+      touchStep(step);
+      touchProject(project);
+      const ok = await saveProjects();
+      if(!ok) showToast('Save failed — try again', true);
+    });
+  });
+  bg.querySelector('#snClose').addEventListener('click', async () => { await flush(); bg.remove(); render(); });
+  bg.querySelector('#snEdit').addEventListener('click', async () => { await flush(); bg.remove(); openStepModal(project, step, null, sideRight); });
+  bg.addEventListener('click', async ev => { if(ev.target === bg){ await flush(); bg.remove(); render(); } });
+  ta.focus();
+}
+
 function openStepModal(project, step, presetStage, sideRight){
   closeSidePanels();
   const isNew = !step;
@@ -7904,7 +8217,7 @@ const GEAR_PRESETS = {
   basic: ['Camera Crate', 'Battery Crate', 'Audio Crate', 'Hard Drive Case', 'Tripod Bag'],
   wedding: ['Camera Crate', 'Battery Crate', 'Hard Drive Case', 'Tripod Bag', 'Gimbal Box', 'Rode Wireless PRO Compact Wireless II'],
 };
-const CATEGORIES = ['Camera & Cage', 'Lenses', 'Storage', 'Power', 'Lighting', 'Tripod & Support', 'Gimbal & Stabiliser', 'Focus & Monitoring', 'Cables', 'Audio', 'Tools', 'Photography'];
+const CATEGORIES = ['Camera & Cage', 'Lenses', 'Storage', 'Power', 'Lighting', 'Tripod & Rigging', 'Gimbal & Stabiliser', 'Focus & Monitoring', 'Cables', 'Audio', 'Tools', 'Photography'];
 
 let ENTITIES = [];
 let gearExpandedCategories = new Set(); // which "not in a crate" category dropdowns are open, persisted across re-renders
@@ -8130,6 +8443,32 @@ function migrateEntities(){
       changed = true;
     }
   }
+  // gear housekeeping (idempotent): category rename, quantities, moved/added items
+  const now = new Date().toISOString();
+  ENTITIES.forEach(e => {
+    if(e.category === 'Tripod & Support'){ e.category = 'Tripod & Rigging'; changed = true; }
+  });
+  const setQtyCat = (name, qty, cat) => {
+    ENTITIES.filter(e => e.type === 'item' && e.name === name).forEach(e => {
+      if(e.qty !== qty || (cat && e.category !== cat)){
+        e.qty = qty; if(cat) e.category = cat; e.updatedAt = now; changed = true;
+      }
+    });
+  };
+  setQtyCat('Godox 35 Degree Cone', 3);
+  setQtyCat('Godox Light Stand Mount', 3);
+  setQtyCat('Godox DC Power Cable', 3, 'Lighting');
+  const addItem = (name, cat, parentId, qty) => {
+    if(ENTITIES.some(e => e.name === name)) return;
+    if(parentId && !ENTITIES.some(e => e.id === parentId)) parentId = null;
+    ENTITIES.push({
+      id: slugify(name), name, category: cat, type:'item', parentId: parentId || null,
+      tracked: !parentId, qty, location: HOME_BASE, updatedAt: now, history: [],
+    });
+    changed = true;
+  };
+  addItem('C-Stand', 'Tripod & Rigging', null, 3);
+  addItem('Samyang 35mm T1.5 [broken]', 'Lenses', 'lens-pouch', 1);
   return changed;
 }
 async function loadEntities(){
@@ -8974,7 +9313,7 @@ function seedData(){
     ['lens-pouch', 'Lens Crate', 'Lenses'],
     ['battery-pouch', 'Battery Crate', 'Power'],
     ['neewer-bag', 'Neewer Bag', 'Lighting'],
-    ['tripod-bag', 'Tripod Bag', 'Tripod & Support'],
+    ['tripod-bag', 'Tripod Bag', 'Tripod & Rigging'],
     ['gimbal-bag', 'Gimbal Box', 'Gimbal & Stabiliser'],
     ['vest-bag', 'Steadicam Vest Bag', 'Gimbal & Stabiliser'],
     ['audio-bag', 'Audio Crate', 'Audio'],
@@ -9000,6 +9339,7 @@ function seedData(){
     ['Canon 35mm f/2.0 USM','Lenses',null,1],
     ['Samyang 14mm T3.1','Lenses','lens-pouch',1],
     ['Samyang 85mm T1.5','Lenses','lens-pouch',1],
+    ['Samyang 35mm T1.5 [broken]','Lenses','lens-pouch',1],
     ['Samsung T7 1TB SSD','Storage','harddrive-case',1],
     ['Samsung T7 Shield 1TB SSD','Storage','harddrive-case',1],
     ['SanDisk Extreme Portable 1TB SSD','Storage','harddrive-case',1],
@@ -9009,18 +9349,19 @@ function seedData(){
     ['Wimaxxit V-Mount Battery','Power','battery-pouch',3],
     ['Wimaxxit V-Mount Battery','Power','camera-bag',1],
     ['LP-E6N Battery','Power',null,6],
-    ['Godox DC Power Cable','Power',null,1],
+    ['Godox DC Power Cable','Lighting',null,3],
     ['Zhiyun 18650 Li-Ion Battery (2600mAh)','Power',null,6],
     ['Zhiyun Li-Ion Battery Charger','Power',null,1],
     ['Godox ML100Bi LED Light','Lighting',null,3],
-    ['Godox Light Stand Mount','Lighting',null,1],
-    ['Godox 35 Degree Cone','Lighting',null,1],
+    ['Godox Light Stand Mount','Lighting',null,3],
+    ['Godox 35 Degree Cone','Lighting',null,3],
     ['Godox Softbox ML SF50','Lighting',null,2],
     ['Neewer Light Stand','Lighting',null,1],
     ['Neewer 40W Bi-Colour LED Panel','Lighting','neewer-bag',3],
     ['Neewer 40W DC Power Cable','Lighting','neewer-bag',3],
-    ['Neewer 79" Heavy Duty Tripod Fluid Head w/ QR Plate','Tripod & Support','tripod-bag',1],
-    ['PYXEL Quick Release Plate','Tripod & Support',null,2],
+    ['Neewer 79" Heavy Duty Tripod Fluid Head w/ QR Plate','Tripod & Rigging','tripod-bag',1],
+    ['PYXEL Quick Release Plate','Tripod & Rigging',null,2],
+    ['C-Stand','Tripod & Rigging',null,3],
     ['Zhiyun Crane 3S Pro Gimbal','Gimbal & Stabiliser','gimbal-bag',1],
     ['Zhiyun Sling Arm','Gimbal & Stabiliser','gimbal-bag',1],
     ['Zhiyun Crane Base Plate','Gimbal & Stabiliser','gimbal-bag',1],
