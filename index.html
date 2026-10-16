@@ -176,6 +176,9 @@
   .sched-list{display:flex; flex-direction:column; gap:6px;}
   .sched-item-wrap{display:flex; flex-direction:column;}
   .sched-item{display:flex; align-items:baseline; justify-content:space-between; gap:8px; background:var(--bg); border:1px solid var(--line); border-radius:6px; padding:7px 10px;}
+  .sched-item.sched-clickable{cursor:pointer;}
+  .sched-item.sched-clickable:hover, .sched-item.sched-open{border-color:var(--text);}
+  .sched-edit-box{background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:8px 10px; margin-top:6px;}
   .sched-item.sched-lunch{background:rgba(217,164,4,0.12); border-color:var(--yellow); border-style:dashed;}
   .sched-item.sched-drive{background:rgba(9,124,124,0.1); border-color:var(--in);}
   .sched-seg-drive{background:repeating-linear-gradient(45deg, var(--in), var(--in) 3px, var(--panel) 3px, var(--panel) 6px) !important;}
@@ -297,6 +300,26 @@
   .table-row-name{font-size:16px; font-weight:600; font-family:var(--display);}
   .table-row-meta{font-size:13px; color:var(--text-dim); font-family:var(--display); margin-top:2px; text-transform:lowercase;}
   .table-row-time{font-family:var(--display); font-size:13px; color:var(--text-dim); flex:none; padding-top:2px;}
+  .table-row-col{display:none;}
+  .table-header-row{display:none;}
+  @media (min-width:860px){
+    .table-row{
+      display:grid; grid-template-columns: 18px 2fr 1fr 1fr 1fr 90px;
+      align-items:center; gap:16px; padding:12px 0;
+    }
+    .table-row .dot{margin-top:0;}
+    .table-row-meta{display:none;}
+    .table-row-col{
+      display:block; font-size:13px; color:var(--text-dim); font-family:var(--display); text-transform:lowercase;
+    }
+    .table-row-time{padding-top:0;}
+    .table-header-row{
+      display:grid; grid-template-columns: 18px 2fr 1fr 1fr 1fr 90px; gap:16px;
+      font-family:var(--display); font-size:12px; color:var(--text-dim); text-transform:lowercase;
+      padding:0 0 8px 0; border-bottom:1px solid var(--line); margin-top:8px;
+    }
+    .table-header-row span:first-child{grid-column:2;}
+  }
   .card-name{font-weight:700; font-size:15px; margin-bottom:3px; display:flex; align-items:center; gap:6px;}
   .card-meta{font-family:var(--mono); font-size:12px; color:var(--text-dim); display:flex; gap:8px; flex-wrap:wrap;}
   .tag-chip{background:var(--panel-2); border-radius:5px; padding:1px 6px; font-size:10.5px; text-transform:uppercase; letter-spacing:0.05em;}
@@ -412,6 +435,7 @@
   /* moodboard editor */
   .mboard-toolbar{display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding-bottom:14px; margin-bottom:14px; border-bottom:1px solid var(--line);}
   .mboard-title{font-weight:800; font-size:16px;}
+  .mb-tl{position:relative; height:calc(100vh - 320px); min-height:460px; border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; margin-bottom:12px;}
   .mboard-hint{font-family:var(--mono); font-size:11px; color:var(--text-dim); margin-bottom:10px; min-height:2.4em;}
   .mboard-wrap{
     overflow:hidden; border:1px solid var(--line); border-radius:var(--radius);
@@ -701,6 +725,26 @@
   .table-row-name{font-size:16px; font-weight:600; font-family:var(--display);}
   .table-row-meta{font-size:13px; color:var(--text-dim); font-family:var(--display); margin-top:2px; text-transform:lowercase;}
   .table-row-time{font-family:var(--display); font-size:13px; color:var(--text-dim); flex:none; padding-top:2px;}
+  .table-row-col{display:none;}
+  .table-header-row{display:none;}
+  @media (min-width:860px){
+    .table-row{
+      display:grid; grid-template-columns: 18px 2fr 1fr 1fr 1fr 90px;
+      align-items:center; gap:16px; padding:12px 0;
+    }
+    .table-row .dot{margin-top:0;}
+    .table-row-meta{display:none;}
+    .table-row-col{
+      display:block; font-size:13px; color:var(--text-dim); font-family:var(--display); text-transform:lowercase;
+    }
+    .table-row-time{padding-top:0;}
+    .table-header-row{
+      display:grid; grid-template-columns: 18px 2fr 1fr 1fr 1fr 90px; gap:16px;
+      font-family:var(--display); font-size:12px; color:var(--text-dim); text-transform:lowercase;
+      padding:0 0 8px 0; border-bottom:1px solid var(--line); margin-top:8px;
+    }
+    .table-header-row span:first-child{grid-column:2;}
+  }
   .card-name{font-weight:700; font-size:15px; margin-bottom:3px; display:flex; align-items:center; gap:6px;}
   .card-meta{font-family:var(--mono); font-size:12px; color:var(--text-dim); display:flex; gap:8px; flex-wrap:wrap;}
   .tag-chip{background:var(--panel-2); border-radius:5px; padding:1px 6px; font-size:10.5px; text-transform:uppercase; letter-spacing:0.05em;}
@@ -840,6 +884,9 @@
   .preset-row{display:flex; gap:8px; margin-bottom:16px;}
   .loc-filter-row{display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;}
   .loc-filter-pill{display:flex; align-items:center; gap:6px;}
+  .checklist-row{display:flex; align-items:center; gap:8px; margin-bottom:8px;}
+  .checklist-row input[type=text]{flex:1;}
+  .checklist-row input[type=checkbox]{flex:none; width:18px; height:18px;}
 
   .field-check{display:flex; align-items:center; gap:8px; font-size:13px; margin-top:4px;}
   .modal-actions{display:flex; gap:8px; margin-top:16px;}
@@ -1776,6 +1823,16 @@ function gatherCalendarEvents(){
           if(m.date) events.push({ date: m.date, projectId: p.id, projectName: p.name, color, label: 'Client meeting', type: 'meeting', done: false });
         });
       }
+      if(s.tests){
+        s.tests.forEach((t, i) => {
+          if(t.date) events.push({ date: t.date, projectId: p.id, projectName: p.name, color, label: `Test: ${t.name || 'Test ' + (i+1)}`, type: 'test', done: !!t.outcomeWentWell || !!t.outcomeNeedsTesting });
+        });
+      }
+      if(s.datedItems){
+        s.datedItems.forEach(d => {
+          if(d.date) events.push({ date: d.date, projectId: p.id, projectName: p.name, color, label: `${s.title || 'Step'}: ${truncate(d.description || 'Untitled', 40)}`, type: 'dated', done: false });
+        });
+      }
     });
     getShootDates(p).forEach(d => {
       events.push({ date: d, projectId: p.id, projectName: p.name, color, label: 'Shoot day', type: 'shoot', done: false });
@@ -1795,6 +1852,127 @@ function gatherCalendarEvents(){
     }
   });
   return events;
+}
+
+function icsEscapeStr(s){ return (s||'').replace(/\\/g,'\\\\').replace(/,/g,'\\,').replace(/;/g,'\\;').replace(/\n/g,'\\n'); }
+function toIcsDateStr(iso){ return (iso||'').replace(/-/g,''); }
+// builds one .ics file containing a VEVENT per selected step, optionally inviting the given
+// recipient emails as ATTENDEEs — no backend/email service involved, the file just gets
+// downloaded and attached by hand to whatever email the user sends.
+function buildStepsIcs(project, steps, emails){
+  const lines = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//twolastnames//project log//EN','CALSCALE:GREGORIAN'];
+  const stamp = new Date().toISOString().replace(/[-:]/g,'').split('.')[0] + 'Z';
+  steps.forEach(s => {
+    const d = stepDeadline(s);
+    if(!d) return;
+    lines.push('BEGIN:VEVENT');
+    lines.push(`UID:${s.id}-${d}@twolastnames`);
+    lines.push(`DTSTAMP:${stamp}`);
+    lines.push(`DTSTART;VALUE=DATE:${toIcsDateStr(d)}`);
+    lines.push(`SUMMARY:${icsEscapeStr(project.name + ' — ' + (s.title || 'Step'))}`);
+    if(s.progressNote) lines.push(`DESCRIPTION:${icsEscapeStr(s.progressNote)}`);
+    (emails||[]).forEach(em => lines.push(`ATTENDEE;RSVP=TRUE:mailto:${em}`));
+    lines.push('END:VEVENT');
+  });
+  lines.push('END:VCALENDAR');
+  return lines.join('\r\n');
+}
+function downloadIcsFile(filename, content){
+  const blob = new Blob([content], { type:'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+// lets the user pick which steps to invite people to and who — generates a downloadable .ics
+// with one event per picked step (dateless steps can't be picked) and opens a prefilled email
+// ready to send, with a reminder to attach the file that was just downloaded.
+function openInviteModal(project){
+  closeSidePanels();
+  const allSteps = (project.steps || []).filter(s => !s.hidden);
+  const datedSteps = allSteps.filter(s => !!stepDeadline(s));
+  const selected = new Set();
+  const bg = document.createElement('div');
+  bg.className = 'modal-bg side-right';
+
+  function rowHtml(s){
+    const checked = selected.has(s.id);
+    return `
+      <div class="checklist-row" data-invitestep="${s.id}">
+        <input type="checkbox" data-invitecheck="${s.id}" ${checked ? 'checked' : ''}>
+        <label style="flex:1; cursor:pointer;" data-invitelabel="${s.id}">${esc(s.title || 'Untitled step')} <span style="color:var(--text-dim); font-family:var(--mono); font-size:10.5px;">· ${esc(fmtDate(stepDeadline(s)))}</span></label>
+      </div>`;
+  }
+
+  bg.innerHTML = `
+    <div class="modal">
+      <h3>Send invite</h3>
+      <div style="font-family:var(--mono); font-size:10.5px; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-dim); margin-bottom:10px;">${esc(project.name)}</div>
+      <label class="loc-label">Steps to invite people to</label>
+      ${datedSteps.length ? `<div id="inviteStepList">${datedSteps.map(rowHtml).join('')}</div>` : `<div style="font-family:var(--mono); font-size:11px; color:var(--text-dim); margin-bottom:10px;">No steps with a date yet — add a date to a step first.</div>`}
+      <div class="field" style="margin-top:12px;">
+        <label class="loc-label">Who to invite</label>
+        <textarea id="inviteEmails" rows="2" placeholder="email addresses, separated by commas"></textarea>
+      </div>
+      <div class="field">
+        <label class="loc-label">Message (optional)</label>
+        <textarea id="inviteMessage" rows="3" placeholder="Anything to add to the email…"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn ghost" id="inviteCancel" style="flex:1;">Cancel</button>
+        <button class="btn primary" id="inviteSend" style="flex:1;">Download &amp; email invite</button>
+      </div>
+    </div>`;
+  presentPanel(bg, null);
+  bg.querySelectorAll('[data-invitecheck]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      if(cb.checked) selected.add(cb.dataset.invitecheck); else selected.delete(cb.dataset.invitecheck);
+    });
+  });
+  bg.querySelectorAll('[data-invitelabel]').forEach(lab => {
+    lab.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      const cb = bg.querySelector(`[data-invitecheck="${lab.dataset.invitelabel}"]`);
+      cb.checked = !cb.checked;
+      cb.dispatchEvent(new Event('change'));
+    });
+  });
+  bg.querySelector('#inviteCancel').addEventListener('click', () => bg.remove());
+  bg.addEventListener('click', ev => { if(ev.target === bg) bg.remove(); });
+  bg.querySelector('#inviteSend').addEventListener('click', () => {
+    const stepsToInvite = datedSteps.filter(s => selected.has(s.id));
+    if(!stepsToInvite.length){ showToast('Pick at least one step', true); return; }
+    const emailsRaw = bg.querySelector('#inviteEmails').value.trim();
+    const emails = emailsRaw.split(/[,\n]/).map(e => e.trim()).filter(Boolean);
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const bad = emails.filter(e => !emailRe.test(e));
+    if(!emails.length){ showToast('Add at least one email address', true); return; }
+    if(bad.length){ showToast(`Not a valid email: ${bad[0]}`, true); return; }
+
+    const ics = buildStepsIcs(project, stepsToInvite, emails);
+    const filename = `${(project.name || 'project').replace(/[^a-z0-9]+/gi,'-')}-invite.ics`;
+    downloadIcsFile(filename, ics);
+
+    const message = bg.querySelector('#inviteMessage').value.trim();
+    const stepList = stepsToInvite.map(s => `${s.title || 'Step'} (${fmtDate(stepDeadline(s))})`).join(', ');
+    const subject = `Invite: ${project.name}`;
+    const body = [
+      message,
+      message ? '' : null,
+      `You're invited to: ${stepList}.`,
+      '',
+      `A calendar file (${filename}) has just downloaded — attach it to this email before sending so it shows up as a calendar invite.`,
+    ].filter(l => l !== null).join('\n');
+    const mailto = `mailto:${emails.join(',')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = mailto;
+
+    bg.remove();
+    showToast('Invite downloaded — attach it in your email app');
+  });
 }
 
 function globalLatestNote(){
@@ -2250,44 +2428,29 @@ function openBoardFilterPicker(title, options, onPick){
   });
 }
 let boardClockInterval = null;
-// works out the real clock window allotted to one shot on its shooting day, dividing the day's
-// scheduled start/end (minus any lunch break) equally across that day's shots, in shot-list order —
-// same "time per shot" idea the Shooting schedule step already uses, just resolved for one shot
+// works out the real clock window allotted to one shot on its shooting day: the Shooting schedule's
+// time for that shot's scene (with any edited scene minutes and set up changes) divided equally
+// across the shots in that scene, in shot-list order
 function computeShotTimeSlot(project, shot){
   const schedStep = (project.steps || []).find(isScheduleStep);
-  const shotStep = (project.steps || []).find(isShotListStep);
-  if(!schedStep || !schedStep.scheduleDays || !shot.day || !shotStep) return null;
+  if(!schedStep || !schedStep.scheduleDays || !shot.day) return null;
   const dayData = schedStep.scheduleDays.find(d => d.date === shot.day);
   if(!dayData || !dayData.start || !dayData.end) return null;
-  const dayShots = (shotStep.shotListRows || []).filter(s => s.day === shot.day);
-  const idxInDay = dayShots.findIndex(s => s.id === shot.id);
-  if(idxInDay === -1) return null;
-
-  const toMinutes = (hhmm) => { const [h,m] = (hhmm||'0:0').split(':').map(Number); return (h||0)*60 + (m||0); };
-  const startMin = toMinutes(dayData.start);
-  let endMin = toMinutes(dayData.end);
-  if(endMin <= startMin) endMin += 24*60;
-  const lunchStartMin = (dayData.lunch && dayData.lunchStart) ? toMinutes(dayData.lunchStart) : null;
-  const lunchDur = dayData.lunch ? (parseInt(dayData.lunchMinutes,10) || 60) : 0;
-  const totalWorkMin = Math.max(1, (endMin - startMin) - lunchDur);
-  const perShot = totalWorkMin / dayShots.length;
-
-  const addWorkMinutes = (fromMin, minutesToAdd) => {
-    if(lunchStartMin !== null && fromMin < lunchStartMin && fromMin + minutesToAdd > lunchStartMin){
-      const before = lunchStartMin - fromMin;
-      return lunchStartMin + lunchDur + (minutesToAdd - before);
-    }
-    return fromMin + minutesToAdd;
-  };
-  const slotStartMin = addWorkMinutes(startMin, perShot * idxInDay);
-  const slotEndMin = addWorkMinutes(startMin, perShot * (idxInDay + 1));
-
+  migrateScheduleDay(dayData);
+  const key = shot.scene || '(No scene set)';
+  const { items } = allocateScenes(dayData, scheduleSceneGroups(project, shot.day));
+  const item = items.find(x => !x.isLunch && !x.isChange && x.scene === key);
+  if(!item || item.startMin === null) return null;
+  const sceneRows = scheduleRelevantRows(project, shot.day).filter(r => (r.scene || '(No scene set)') === key);
+  const idxInScene = sceneRows.findIndex(r => r.id === shot.id);
+  if(idxInScene === -1) return null;
+  const perShot = (item.endMin - item.startMin) / sceneRows.length;
   const toDate = (minutesFromMidnight) => {
     const d = new Date(shot.day + 'T00:00:00');
-    d.setMinutes(d.getMinutes() + minutesFromMidnight);
+    d.setMinutes(d.getMinutes() + Math.round(minutesFromMidnight));
     return d;
   };
-  return { startDate: toDate(slotStartMin), endDate: toDate(slotEndMin) };
+  return { startDate: toDate(item.startMin + perShot * idxInScene), endDate: toDate(item.startMin + perShot * (idxInScene + 1)) };
 }
 function formatBoardCountdown(ms){
   const sign = ms < 0 ? '−' : '';
@@ -2545,7 +2708,7 @@ function renderList(app, tab){
     <div class="toolbar">
       ${searchOpen
         ? `<input type="search" id="searchBox" placeholder="Search projects…" value="${esc(app.dataset.search||'')}">`
-        : `<button class="sq-btn" id="searchToggle" aria-label="Search">&#128269;</button>`}
+        : `<button class="sq-btn" id="searchToggle" aria-label="Search"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></button>`}
       <button class="btn primary round-add" id="addBtn" aria-label="New project" title="New project">+</button>
     </div>
     <div class="section-label"><span>Projects (${current.length})</span></div>
@@ -2806,9 +2969,14 @@ function renderDetail(app, p){
     <div style="padding-top:16px;">
     <div style="display:flex; align-items:center; justify-content:space-between;">
       <button class="back" id="backBtn">← All projects</button>
-      <button class="sq-btn" id="projCalBtn" aria-label="Project calendar" title="Project calendar">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4.5" width="18" height="16" rx="3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>
-      </button>
+      <div style="display:flex; gap:8px;">
+        <button class="sq-btn" id="inviteBtn" aria-label="Send invite" title="Send invite">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 6.5 12 13l8.5-6.5"/></svg>
+        </button>
+        <button class="sq-btn" id="projCalBtn" aria-label="Project calendar" title="Project calendar">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4.5" width="18" height="16" rx="3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>
+        </button>
+      </div>
     </div>
     <div class="detail-header">
       <div class="tally-big ${dotClass}"></div>
@@ -2881,6 +3049,7 @@ function renderDetail(app, p){
 
   document.getElementById('backBtn').addEventListener('click', () => goTab(p.status));
   document.getElementById('projCalBtn').addEventListener('click', () => goProjectCalendar(p.id));
+  document.getElementById('inviteBtn').addEventListener('click', () => openInviteModal(p));
   document.getElementById('renameBtn').addEventListener('click', () => openEditProjectModal(p));
   const ackDetailBtn = document.getElementById('ackDetailNote');
   if(ackDetailBtn) ackDetailBtn.addEventListener('click', async () => {
@@ -2910,6 +3079,7 @@ function renderDetail(app, p){
       else if(isEquipmentListsStep(step)) openEquipmentListsModal(p, step, true);
       else if(isBoardingStep(step)) openPerShotImagesModal(p, step, true, shotBoardKey, 'Storyboard images');
       else if(isLightingStep(step)) openPerShotImagesModal(p, step, true, shotLightKey, 'Lighting plan images');
+      else openStepModal(p, step, null, true);
     });
   });
   document.querySelectorAll('[data-donedot]').forEach(btn => {
@@ -3467,7 +3637,220 @@ function openMoodboardPanel(project, step, sideRight){
   });
 }
 
+// ---------- Conceptualising board, powered by the tldraw SDK ----------
+// tldraw needs a license key to run on a real domain (it works on localhost without one). Get a
+// free 100-day trial key from tldraw.dev (or a commercial key) and paste it between the quotes —
+// keys are tied to the domain you host on. Leave blank while testing locally.
+const TLDRAW_LICENSE_KEY = '';
+const TLDRAW_VERSION = '5.5.2';
+const TLDRAW_REACT_VERSION = '19.2.1';
+function tldrawKey(stepId){ return 'tldraw:' + stepId; }
+
+let tldrawLibsPromise = null;
+function loadTldrawLibs(){
+  if(!tldrawLibsPromise){
+    if(!document.getElementById('tldrawCss')){
+      const link = document.createElement('link');
+      link.id = 'tldrawCss';
+      link.rel = 'stylesheet';
+      link.href = `https://cdn.jsdelivr.net/npm/tldraw@${TLDRAW_VERSION}/tldraw.css`;
+      document.head.appendChild(link);
+    }
+    const r = TLDRAW_REACT_VERSION, v = TLDRAW_VERSION;
+    tldrawLibsPromise = Promise.all([
+      import(`https://esm.sh/react@${r}`),
+      import(`https://esm.sh/react-dom@${r}/client?deps=react@${r}`),
+      import(`https://esm.sh/tldraw@${v}?deps=react@${r},react-dom@${r}`),
+    ]).then(([React, ReactDOM, TL]) => ({ React, ReactDOM, TL }))
+      .catch(e => { tldrawLibsPromise = null; throw e; });
+  }
+  return tldrawLibsPromise;
+}
+
+async function loadTldrawBoard(stepId){
+  try{
+    const res = await window.storage.get(tldrawKey(stepId), true);
+    if(res && res.value) return JSON.parse(res.value);
+  }catch(e){ /* fall through to a fresh board */ }
+  return null;
+}
+async function saveTldrawBoard(stepId, data){
+  const json = JSON.stringify(data);
+  if(json.length > 4600000) return { ok:false, reason:'full' };
+  try{ await window.storage.set(tldrawKey(stepId), json, true); return { ok:true }; }
+  catch(e){ console.error('whiteboard save failed', e); return { ok:false, reason:'error' }; }
+}
+
+// puts the five default labels (or an older board's images, text and pen strokes) onto a tldraw canvas
+function populateTldrawBoard(editor, TL, legacy){
+  const hexToColor = { '#17181a':'black', '#009cde':'blue', '#d6001c':'red', '#d9a404':'yellow', '#275d38':'green' };
+  const textSize = fs => fs >= 34 ? 'xl' : fs >= 22 ? 'l' : fs >= 16 ? 'm' : 's';
+  const strokeSize = w => w <= 2 ? 's' : w <= 4 ? 'm' : w <= 8 ? 'l' : 'xl';
+  const shapes = [];
+  const assets = [];
+  if(!legacy || !((legacy.objects||[]).length || (legacy.strokes||[]).length)){
+    const labels = ['Lighting', 'Camera/Lens', 'Costume', 'Props', 'Location'];
+    const cx = 650, cy = 475, radius = 230;
+    labels.forEach((text, i) => {
+      const angle = -Math.PI/2 + i * (2*Math.PI/labels.length);
+      shapes.push({ id: TL.createShapeId(), type:'text', x: Math.round(cx + radius*Math.cos(angle) - 60), y: Math.round(cy + radius*Math.sin(angle) - 16),
+        props: { richText: TL.toRichText(text), size:'l', autoSize:true, color:'black' } });
+    });
+  } else {
+    (legacy.objects || []).slice().sort((a,b) => (a.z||0) - (b.z||0)).forEach(o => {
+      if(o.type === 'image' && o.src){
+        const assetId = TL.AssetRecordType.createId();
+        assets.push(TL.AssetRecordType.create({ id: assetId, type:'image', typeName:'asset', props:{ name:'image', src:o.src, w:o.w, h:o.h, mimeType:'image/jpeg', isAnimated:false }, meta:{} }));
+        shapes.push({ id: TL.createShapeId(), type:'image', x:o.x, y:o.y, props:{ w:o.w, h:o.h, assetId } });
+      } else if(o.type === 'text'){
+        shapes.push({ id: TL.createShapeId(), type:'text', x:o.x, y:o.y,
+          props: { richText: TL.toRichText(o.text || ''), size: textSize(o.fontSize||22), autoSize:true, color: hexToColor[(o.color||'').toLowerCase()] || 'black' } });
+      }
+    });
+    (legacy.strokes || []).forEach(s => {
+      if(!s.points || s.points.length < 2) return;
+      const p0 = s.points[0];
+      try{
+        const pts = s.points.map(p => ({ x:+(p.x-p0.x).toFixed(1), y:+(p.y-p0.y).toFixed(1), z:0.5 }));
+        shapes.push({ id: TL.createShapeId(), type:'draw', x:p0.x, y:p0.y,
+          props: { segments:[{ type:'free', path: TL.b64Vecs.encodePoints(pts, 3), dim:3 }],
+                   isComplete:true, isClosed:false, isPen:false, color: hexToColor[(s.color||'').toLowerCase()] || 'black', size: strokeSize(s.width||4) } });
+      }catch(e){ console.warn('skipped a pen stroke while converting the old board', e); }
+    });
+  }
+  if(assets.length) editor.createAssets(assets);
+  if(shapes.length) editor.createShapes(shapes);
+}
+
 async function renderMoodboard(app, project, step){
+  app.innerHTML = `<div class="loading">Loading whiteboard…</div>`;
+  let libs;
+  try{ libs = await loadTldrawLibs(); }
+  catch(e){
+    console.error('tldraw failed to load', e);
+    showToast("Couldn't load the whiteboard — showing the basic board instead", true);
+    return renderMoodboardLegacy(app, project, step);
+  }
+  const { React, ReactDOM, TL } = libs;
+  let saved = await loadTldrawBoard(step.id);
+  let legacy = null;
+  if(!saved){ legacy = (await loadMoodboard(step.id)).board; } // an older board (or none) gets carried across
+  const meta = { notes: saved ? (saved.notes || '') : ((legacy && legacy.notes) || '') };
+
+  app.innerHTML = `
+    <div style="padding-top:16px;">
+    <button class="back" id="mbBack">← ${esc(project.name)}</button>
+    ${stepDateRangeFieldHtml(step, 'mb')}
+    <div class="mboard-toolbar">
+      <div>
+        <div class="mboard-title">${esc(step.title || 'Step')}</div>
+        <div class="eyebrow small" style="margin:2px 0 0;">MOODBOARD</div>
+      </div>
+      <div style="flex:1;"></div>
+      <button class="btn small" id="mbExport">Export</button>
+      <button class="btn small danger" id="mbClear">Clear board</button>
+      <button class="btn small" id="mbReset">Fit view</button>
+    </div>
+    <div class="mb-tl" id="mbTl"></div>
+    <div class="section-label"><span>Notes</span></div>
+    <textarea id="mbNotes" placeholder="Write any notes about this moodboard — themes, references, direction…" rows="4">${esc(meta.notes)}</textarea>
+    </div>`;
+
+  const mountEl = document.getElementById('mbTl');
+  let editor = null;
+  let saveTimer = null;
+  let dirty = false;
+  async function flush(){
+    clearTimeout(saveTimer); saveTimer = null;
+    if(!editor || !dirty) return true;
+    dirty = false;
+    const result = await saveTldrawBoard(step.id, { v:1, document: TL.getSnapshot(editor.store).document, notes: meta.notes });
+    if(!result.ok) showToast(result.reason === 'full' ? "This board is too full to save — export it, then delete some images" : 'Save failed', true);
+    return result.ok;
+  }
+  function scheduleSave(){ dirty = true; clearTimeout(saveTimer); saveTimer = setTimeout(flush, 700); }
+
+  const assetStore = {
+    async upload(asset, file){ const { dataUrl } = await processImageFile(file, 1000, 0.82); return { src: dataUrl }; },
+    resolve(asset){ return asset.props.src; },
+  };
+  const root = ReactDOM.createRoot(mountEl);
+  root.render(React.createElement('div', { style:{ position:'absolute', inset:0 } },
+    React.createElement(TL.Tldraw, {
+      licenseKey: TLDRAW_LICENSE_KEY || undefined,
+      snapshot: saved ? saved.document : undefined,
+      assets: assetStore,
+      onMount: (ed) => {
+        editor = ed;
+        window.__mbEditor = ed;
+        if(!saved){ populateTldrawBoard(ed, TL, legacy); dirty = true; }
+        ed.zoomToFit({ animation:{ duration:0 } });
+        const stop = ed.store.listen(scheduleSave, { source:'user', scope:'document' });
+        if(dirty) flush(); // save a freshly seeded/carried-over board straight away
+        return stop;
+      },
+    })));
+
+  // tear down once this board leaves the page (route change, panel closed, etc.)
+  const watcher = setInterval(async () => {
+    if(mountEl.isConnected) return;
+    clearInterval(watcher);
+    await flush();
+    root.unmount();
+    if(window.__mbEditor === editor) window.__mbEditor = null;
+  }, 800);
+
+  document.getElementById('mbBack').addEventListener('click', async () => { await flush(); goProject(project.id); });
+  const notesEl = document.getElementById('mbNotes');
+  notesEl.addEventListener('blur', () => { if(meta.notes === notesEl.value) return; meta.notes = notesEl.value; dirty = true; flush(); });
+  document.getElementById('mbReset').addEventListener('click', () => { if(editor) editor.zoomToFit({ animation:{ duration:200 } }); });
+  document.getElementById('mbClear').addEventListener('click', () => {
+    if(!editor) return;
+    const ids = [...editor.getCurrentPageShapeIds()];
+    if(!ids.length){ showToast('Board is already empty'); return; }
+    openConfirmModal('Clear everything on this moodboard? Export a copy first if you want to keep it.', async () => {
+      editor.deleteShapes(ids);
+      showToast('Board cleared');
+    });
+  });
+  document.getElementById('mbExport').addEventListener('click', async () => {
+    if(!editor) return;
+    const ids = [...editor.getCurrentPageShapeIds()];
+    if(!ids.length){ showToast('Nothing to export yet'); return; }
+    try{
+      const { blob } = await editor.toImage(ids, { format:'png', background:true, padding:32 });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${(step.title || 'moodboard').toLowerCase().replace(/[^a-z0-9]+/g,'-')}-moodboard.png`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      showToast('Moodboard exported');
+    }catch(e){ console.error(e); showToast('Export failed', true); }
+  });
+  app.addEventListener('click', ev => {
+    const trigger = ev.target.closest('.dfield');
+    if(!trigger) return;
+    const rangeWrap = trigger.closest('[data-rangepicker="mb"]');
+    if(rangeWrap){
+      const triggers = rangeWrap.querySelectorAll('.dfield');
+      openDateRangePicker(triggers[0], triggers[1]);
+    }
+  });
+  app.addEventListener('change', async (ev) => {
+    const el = ev.target;
+    if(el.id === 'mbStart' || el.id === 'mbEnd'){
+      step.startDate = document.getElementById('mbStart') ? document.getElementById('mbStart').value : step.startDate;
+      step.endDate = document.getElementById('mbEnd') ? document.getElementById('mbEnd').value : step.endDate;
+      touchStep(step);
+      touchProject(project);
+      await saveProjects();
+    }
+  });
+}
+
+// the original hand-built board — only used as a fallback if the tldraw library can't be loaded
+async function renderMoodboardLegacy(app, project, step){
   app.innerHTML = `<div class="loading">Loading moodboard…</div>`;
   const { board, isNew } = await loadMoodboard(step.id);
   board.objects = board.objects || [];
@@ -6425,16 +6808,144 @@ function openEquipmentListsModal(project, step, sideRight){
   presentPanel(bg, step.id);
   paint();
 }
+// ---------- Shooting schedule maths (shared by the schedule panel and the on-set storyboard clock) ----------
+function schedToMin(hhmm){ const [h,m] = (hhmm||'').split(':').map(Number); return (h||0)*60 + (m||0); }
+function schedNum(v, dflt){ const n = parseFloat(v); return (isNaN(n) || n < 0) ? dflt : n; }
+// older saved days treated "start"/"end" as the first and last shot times; they now mean arriving at and
+// leaving the location. Shift them once so the shooting window stays exactly where it was.
+function migrateScheduleDay(day){
+  if(!day || day.v2) return day;
+  day.v2 = true;
+  if(day.start) day.start = minutesToHHMM(schedToMin(day.start) - 60); // 45 min set up + 15 min debrief
+  if(day.end) day.end = minutesToHHMM(schedToMin(day.end) + 34);       // pack down = ¾ of 45 min set up
+  return day;
+}
+// arrive → set up → debrief → shooting → pack down → leave. Every length can be edited per day;
+// pack down follows ¾ of the set up time unless it's been set by hand.
+function dayTimings(day){
+  if(!day || !day.start) return null;
+  const arrive = schedToMin(day.start);
+  const setupMins = schedNum(day.setupMinutes, 45);
+  const debriefMins = schedNum(day.debriefMinutes, 15);
+  const autoPack = Math.round(setupMins * 0.75);
+  const packMins = (day.packMinutes !== undefined && day.packMinutes !== '') ? schedNum(day.packMinutes, autoPack) : autoPack;
+  const setupEnd = arrive + setupMins;
+  const shootStart = setupEnd + debriefMins;
+  let leave = null, shootEnd = null;
+  if(day.end){
+    leave = schedToMin(day.end);
+    if(leave <= arrive) leave += 24*60;
+    shootEnd = leave - packMins;
+  }
+  return { arrive, setupMins, debriefMins, packMins, autoPack, setupEnd, shootStart, shootEnd, leave };
+}
+function scheduleRelevantRows(project, date){
+  const shotStep = (project.steps || []).find(isShotListStep);
+  if(!shotStep || !shotStep.shotListRows) return [];
+  // a single-shoot-day project (weddings, always exactly one day set at project creation) — every
+  // shot belongs to that one day regardless of what each row's own (often hidden/unset, sometimes
+  // stale from an old import) day value happens to be. Only projects with more than one shoot day
+  // need shots actually matched to a specific date.
+  return getShootDates(project).length <= 1 ? shotStep.shotListRows : shotStep.shotListRows.filter(r => r.day === date);
+}
+function scheduleSceneGroups(project, date){
+  const map = {};
+  scheduleRelevantRows(project, date).forEach(r => {
+    const key = r.scene || '(No scene set)';
+    if(!map[key]) map[key] = { count:0, cameras: new Set() };
+    map[key].count++;
+    // shooter assignment comes straight from whatever camera(s) are on that scene's shots —
+    // "A&B" (or shots split across both cameras) means both shooters are covering it
+    (r.camera || '').split(/[,&/]|\band\b/i).map(c => c.trim().toUpperCase()).filter(Boolean).forEach(c => map[key].cameras.add(c));
+  });
+  return Object.entries(map).map(([scene,data]) => ({
+    scene, count: data.count,
+    shooter: data.cameras.size > 1 ? 'Both' : (data.cameras.size === 1 ? [...data.cameras][0] : ''),
+  }));
+}
+// lays the scenes (plus lunch and any set up changes between scenes) across the shooting window —
+// from the end of debrief to the start of pack down. A scene with its own minutes keeps them; the
+// remaining time is shared out between the other scenes by shot count.
+function allocateScenes(day, groups){
+  const changes = day.setupChanges || {};
+  const sceneMins = day.sceneMinutes || {};
+  const customOf = g => { const n = parseFloat(sceneMins[g.scene]); return n > 0 ? n : null; };
+  const changeAfter = (g, idx) => (idx < groups.length - 1 && changes[g.scene] !== undefined) ? schedNum(changes[g.scene], 0) : null;
+  const t = dayTimings(day);
+  if(!t || t.shootEnd === null || !groups.length){
+    const items = [];
+    groups.forEach((g, idx) => {
+      items.push({ ...g, isLast: idx === groups.length - 1, range:null, startMin:null, endMin:null, minutes: customOf(g), perShotMin:null, custom: !!customOf(g) });
+      const ch = changeAfter(g, idx);
+      if(ch !== null) items.push({ isChange:true, scene:g.scene, minutes:ch, range:null });
+    });
+    return { items, overMin:0, tooShort:false };
+  }
+  const hasLunch = !!(day.lunch && day.lunchStart);
+  const lunchDur = hasLunch ? schedNum(day.lunchMinutes, 60) : 0;
+  let lunchStartMin = hasLunch ? schedToMin(day.lunchStart) : null;
+  if(hasLunch && lunchStartMin < t.arrive) lunchStartMin += 24*60;
+  const windowMin = t.shootEnd - t.shootStart;
+  const changeTotal = groups.reduce((s, g, idx) => s + (changeAfter(g, idx) || 0), 0);
+  const available = Math.max(0, windowMin - lunchDur - changeTotal);
+  const fixed = groups.reduce((s, g) => s + (customOf(g) || 0), 0);
+  const flex = groups.filter(g => !customOf(g));
+  const flexShots = flex.reduce((s, g) => s + g.count, 0) || 1;
+  const flexMin = Math.max(0, available - fixed);
+  const flexMins = {};
+  let assigned = 0;
+  flex.forEach((g, k) => {
+    const raw = (k === flex.length - 1) ? flexMin - assigned : flexMin * (g.count / flexShots);
+    const mins = Math.max(1, Math.round(raw));
+    flexMins[g.scene] = mins;
+    assigned += mins;
+  });
+  const clk = (a, b) => `${minutesToClock(a)} – ${minutesToClock(b)}`;
+  let cursor = t.shootStart;
+  let lunchInserted = !hasLunch;
+  const items = [];
+  groups.forEach((g, idx) => {
+    if(!lunchInserted && cursor >= lunchStartMin){
+      items.push({ isLunch:true, minutes:lunchDur, startMin:cursor, endMin:cursor+lunchDur, range: clk(cursor, cursor+lunchDur) });
+      cursor += lunchDur;
+      lunchInserted = true;
+    }
+    const mins = customOf(g) || flexMins[g.scene];
+    const st = cursor;
+    cursor += mins;
+    items.push({ ...g, isLast: idx === groups.length - 1, custom: !!customOf(g), minutes: mins, startMin: st, endMin: cursor, range: clk(st, cursor), perShotMin: Math.round(mins / g.count) });
+    const ch = changeAfter(g, idx);
+    if(ch !== null){
+      items.push({ isChange:true, scene:g.scene, minutes:ch, startMin:cursor, endMin:cursor+ch, range: clk(cursor, cursor+ch) });
+      cursor += ch;
+    }
+  });
+  if(!lunchInserted){
+    items.push({ isLunch:true, minutes:lunchDur, startMin:cursor, endMin:cursor+lunchDur, range: clk(cursor, cursor+lunchDur) });
+    cursor += lunchDur;
+  }
+  return { items, overMin: Math.max(0, Math.round(cursor - t.shootEnd)), tooShort: windowMin <= 0 };
+}
+
 function openScheduleModal(project, step, sideRight){
   closeSidePanels();
-  const shotStep = (project.steps || []).find(isShotListStep);
   const shootDates = getShootDates(project);
+  const shotStep = (project.steps || []).find(isShotListStep);
   const savedByDate = {};
-  (step.scheduleDays || []).forEach(d => { if(d.date) savedByDate[d.date] = d; });
+  (step.scheduleDays || []).forEach(d => { if(d.date){ migrateScheduleDay(d); savedByDate[d.date] = d; } });
   const days = shootDates.length
-    ? shootDates.map(d => Object.assign({ date:d, start:'', end:'', driveMinutes:'', uber:false, lunch:false, lunchStart:'', lunchMinutes:'60', others:[] }, savedByDate[d] || {}))
+    ? shootDates.map(d => Object.assign({ date:d, start:'', end:'', driveMinutes:'', uber:false, lunch:false, lunchStart:'', lunchMinutes:'60', others:[], setupMinutes:'45', debriefMinutes:'15', packMinutes:'', sceneMinutes:{}, setupChanges:{}, v2:true }, savedByDate[d] || {}))
     : (step.scheduleDays && step.scheduleDays.length ? JSON.parse(JSON.stringify(step.scheduleDays)) : []);
-  days.forEach(d => { if(!d.others) d.others = []; });
+  days.forEach(d => {
+    migrateScheduleDay(d);
+    if(!d.others) d.others = [];
+    if(d.setupMinutes === undefined) d.setupMinutes = '45';
+    if(d.debriefMinutes === undefined) d.debriefMinutes = '15';
+    if(d.packMinutes === undefined) d.packMinutes = '';
+    if(!d.sceneMinutes) d.sceneMinutes = {};
+    if(!d.setupChanges) d.setupChanges = {};
+  });
+  let editingScene = null; // which scene's "how long" box is open
 
   const budgetStep = (project.steps || []).find(isBudgetStep);
   // operators from the Budget step whose day-by-day breakdown includes this date
@@ -6452,115 +6963,70 @@ function openScheduleModal(project, step, sideRight){
   const bg = document.createElement('div');
   bg.className = 'modal-bg' + (sideRight ? ' side-right' : '');
 
-  // works backward from the shoot start time: debrief (15m), then equipment set up (45m),
-  // then drive time from the studio (plus 15m if it's an Uber) to get the leave-studio time.
+  // the day's fixed beats: leave studio → arrive location (the start time) → set up → debrief →
+  // shooting starts; and at the end: shooting ends → pack down → leave location (the end time)
   function morningSchedule(day){
-    if(!day.start) return null;
-    const [h,m] = day.start.split(':').map(Number);
-    const startMin = h*60+m;
-    const debriefStart = startMin - 15;
-    const setupStart = debriefStart - 45;
-    const arriveLocation = setupStart;
+    const t = dayTimings(day);
+    if(!t) return null;
     const driveMin = (parseFloat(day.driveMinutes) || 0) + (day.uber ? 15 : 0);
-    const leaveStudio = arriveLocation - driveMin;
+    const c = minutesToClock;
     return {
-      leaveStudio: minutesToClock(leaveStudio),
-      arriveLocation: minutesToClock(arriveLocation),
-      setupRange: `${minutesToClock(setupStart)} – ${minutesToClock(debriefStart)}`,
-      debriefRange: `${minutesToClock(debriefStart)} – ${minutesToClock(startMin)}`,
-      startClock: minutesToClock(startMin),
+      leaveStudio: c(t.arrive - driveMin),
+      arriveLocation: c(t.arrive),
+      setupRange: `${c(t.arrive)} – ${c(t.setupEnd)}`,
+      debriefRange: `${c(t.setupEnd)} – ${c(t.shootStart)}`,
+      startClock: c(t.shootStart),
       driveMin,
+      end: t.shootEnd === null ? null : {
+        wrapClock: c(t.shootEnd),
+        packRange: `${c(t.shootEnd)} – ${c(t.leave)}`,
+        leaveClock: c(t.leave),
+      },
     };
   }
-
-  function sceneGroups(date){
-    if(!shotStep || !shotStep.shotListRows) return [];
-    // a single-shoot-day project (weddings, always exactly one day set at project creation) — every
-    // shot belongs to that one day regardless of what each row's own (often hidden/unset, sometimes
-    // stale from an old import) day value happens to be. Only projects with more than one shoot day
-    // need shots actually matched to a specific date.
-    const relevantRows = shootDates.length <= 1
-      ? shotStep.shotListRows
-      : shotStep.shotListRows.filter(r => r.day === date);
-    const map = {};
-    relevantRows.forEach(r => {
-      const key = r.scene || '(No scene set)';
-      if(!map[key]) map[key] = { count:0, cameras: new Set() };
-      map[key].count++;
-      // shooter assignment comes straight from whatever camera(s) are on that scene's shots —
-      // "A&B" (or shots split across both cameras) means both shooters are covering it
-      (r.camera || '').split(/[,&/]|\band\b/i).map(c => c.trim().toUpperCase()).filter(Boolean).forEach(c => map[key].cameras.add(c));
-    });
-    return Object.entries(map).map(([scene,data]) => ({
-      scene, count: data.count,
-      shooter: data.cameras.size > 1 ? 'Both' : (data.cameras.size === 1 ? [...data.cameras][0] : ''),
-    }));
+  function morningItemsHtml(morning){
+    return `
+      <div class="sched-item"><div class="sched-item-scene">Leave studio</div><div class="sched-item-meta">${esc(morning.leaveStudio)}</div></div>
+      ${morning.driveMin > 0 ? `<div class="sched-item sched-drive"><div class="sched-item-scene">Driving</div><div class="sched-item-meta">${morning.driveMin} min</div></div>` : ''}
+      <div class="sched-item"><div class="sched-item-scene">Arrive at location</div><div class="sched-item-meta">${esc(morning.arriveLocation)}</div></div>
+      <div class="sched-item"><div class="sched-item-scene">Equipment set up</div><div class="sched-item-meta">${esc(morning.setupRange)}</div></div>
+      <div class="sched-item"><div class="sched-item-scene">Debrief</div><div class="sched-item-meta">${esc(morning.debriefRange)}</div></div>
+      <div class="sched-item"><div class="sched-item-scene">Start shooting</div><div class="sched-item-meta">${esc(morning.startClock)}</div></div>`;
+  }
+  function endItemsHtml(morning){
+    if(!morning || !morning.end) return '';
+    return `
+      <div class="sched-item"><div class="sched-item-scene">Shooting ends</div><div class="sched-item-meta">${esc(morning.end.wrapClock)}</div></div>
+      <div class="sched-item"><div class="sched-item-scene">Pack down</div><div class="sched-item-meta">${esc(morning.end.packRange)}</div></div>
+      <div class="sched-item"><div class="sched-item-scene">Leave location</div><div class="sched-item-meta">${esc(morning.end.leaveClock)}</div></div>`;
   }
 
-  function allocate(day, groups){
-    if(!day.start || !day.end || !groups.length) return groups.map(g => ({ ...g, range:null, perShotMin:null }));
-    const [sh,sm] = day.start.split(':').map(Number);
-    const [eh,em] = day.end.split(':').map(Number);
-    let totalMin = (eh*60+em) - (sh*60+sm);
-    if(totalMin <= 0) totalMin += 24*60;
-    const hasLunch = !!(day.lunch && day.lunchStart);
-    const lunchDur = hasLunch ? (parseFloat(day.lunchMinutes) || 60) : 0;
-    const driveTimes = day.driveTimes || {};
-    const totalDriveMin = groups.reduce((s,g) => s + (parseFloat(driveTimes[g.scene]) || 0), 0);
-    const shootingMin = Math.max(1, totalMin - lunchDur - totalDriveMin);
-    const totalShots = groups.reduce((s,g) => s+g.count, 0) || 1;
-    let lunchStartMin = null;
-    if(hasLunch){
-      const [lh,lm] = day.lunchStart.split(':').map(Number);
-      lunchStartMin = lh*60+lm;
-    }
-    let cursor = sh*60+sm;
-    const dayEndMin = sh*60+sm + totalMin; // exact end of shooting, in the same minute-numbering cursor uses
-    let lunchInserted = !hasLunch;
-    const result = [];
-    groups.forEach((g, idx) => {
-      if(!lunchInserted && cursor >= lunchStartMin){
-        result.push({ isLunch:true, range: `${minutesToClock(cursor)} – ${minutesToClock(cursor+lunchDur)}` });
-        cursor += lunchDur;
-        lunchInserted = true;
-      }
-      const driveMin = parseFloat(driveTimes[g.scene]) || 0;
-      if(driveMin > 0){
-        result.push({ isDrive:true, scene: g.scene, driveMin, range: `${minutesToClock(cursor)} – ${minutesToClock(cursor+driveMin)}` });
-        cursor += driveMin;
-      }
-      // a manually-set scene time pins that scene's start — everything from here follows on from it
-      const customTime = (day.sceneTimes || {})[g.scene];
-      if(customTime){
-        const [ch,cm] = customTime.split(':').map(Number);
-        cursor = ch*60+cm;
-      }
-      const st = cursor;
-      const isLast = idx === groups.length - 1;
-      // the last scene always runs to the actual end of shooting, rather than whatever the
-      // proportional split rounds to (which can land a minute or two short)
-      cursor = isLast ? Math.max(dayEndMin, st + 1) : cursor + Math.max(1, Math.round(shootingMin * (g.count/totalShots)));
-      result.push({ ...g, range: `${minutesToClock(st)} – ${minutesToClock(cursor)}`, perShotMin: Math.round((cursor-st)/g.count) });
-    });
-    if(!lunchInserted && hasLunch){
-      result.push({ isLunch:true, range: `${minutesToClock(cursor)} – ${minutesToClock(cursor+lunchDur)}` });
-    }
-    return result;
+  const sceneGroups = (date) => scheduleSceneGroups(project, date);
+  const sceneKey = (i, scene) => i + '::' + encodeURIComponent(scene);
+  function parseSceneKey(key){
+    const sep = key.indexOf('::');
+    return { dayIdx: parseInt(key.slice(0, sep), 10), scene: decodeURIComponent(key.slice(sep + 2)) };
   }
-  // A/B/Both timeline for one shooter — every scene block (in order) that shooter covers
-  // that shooter's scenes in order, with a "Driving" line inserted wherever the scene right
-  // before it in the day (regardless of who shot it) has a drive time set
-  function shooterTimeline(allocated, letter){
+  // what a scene would get if it had no minutes of its own
+  function suggestedMinutes(day, groups, scene){
+    const clone = Object.assign({}, day, { sceneMinutes: Object.assign({}, day.sceneMinutes) });
+    delete clone.sceneMinutes[scene];
+    const hit = allocateScenes(clone, groups).items.find(x => !x.isLunch && !x.isChange && x.scene === scene);
+    return hit && hit.minutes !== null ? hit.minutes : null;
+  }
+  // A/B/Both timeline for one shooter — every scene block (in order) that shooter covers, with any
+  // set up change that came right before it
+  function shooterTimeline(items, letter){
     const result = [];
-    let pendingDrive = null;
-    allocated.forEach(g => {
-      if(g.isLunch){ pendingDrive = null; return; }
-      if(g.isDrive){ pendingDrive = g; return; }
+    let pendingChange = null;
+    items.forEach(g => {
+      if(g.isLunch){ pendingChange = null; return; }
+      if(g.isChange){ pendingChange = g; return; }
       if(g.shooter === letter || g.shooter === 'Both'){
-        if(pendingDrive) result.push({ isDrive:true, driveMin: pendingDrive.driveMin });
+        if(pendingChange) result.push(pendingChange);
         result.push(g);
       }
-      pendingDrive = null;
+      pendingChange = null;
     });
     return result;
   }
@@ -6572,12 +7038,24 @@ function openScheduleModal(project, step, sideRight){
   function dayHeadAndTimeFields(day, i){
     const dayLabel = shootDates.length ? `Day ${i+1}` : `Shoot day`;
     const dateLabel = day.date ? fmtDate(day.date) : 'No date set';
+    const t = dayTimings(day);
+    const autoPack = Math.round(schedNum(day.setupMinutes, 45) * 0.75);
+    const packShown = (day.packMinutes !== undefined && day.packMinutes !== '') ? day.packMinutes : String(autoPack);
     return `
         <div class="sched-day-head"><span class="loc-day">${esc(dayLabel)}</span><span class="loc-date">${esc(dateLabel)}</span></div>
         <div class="budget-op-fields">
-          <div class="budget-op-field"><label>Start time</label>${timeFieldHtml('schedtime-start-' + i, day.start)}</div>
-          <div class="budget-op-field"><label>End time</label>${timeFieldHtml('schedtime-end-' + i, day.end)}</div>
+          <div class="budget-op-field"><label>Arrive at location</label>${timeFieldHtml('schedtime-start-' + i, day.start)}</div>
+          <div class="budget-op-field"><label>Leave location</label>${timeFieldHtml('schedtime-end-' + i, day.end)}</div>
         </div>
+        <div class="budget-op-fields" style="margin-top:8px;">
+          <div class="budget-op-field"><label>Equipment set up (mins)</label><input type="number" inputmode="numeric" min="0" data-schedfield="setupMinutes" data-idx="${i}" value="${esc(day.setupMinutes)}" placeholder="45"></div>
+          <div class="budget-op-field"><label>Debrief (mins)</label><input type="number" inputmode="numeric" min="0" data-schedfield="debriefMinutes" data-idx="${i}" value="${esc(day.debriefMinutes)}" placeholder="15"></div>
+        </div>
+        <div class="budget-op-fields" style="margin-top:8px;">
+          <div class="budget-op-field"><label>Pack down (mins)</label><input type="number" inputmode="numeric" min="0" data-schedfield="packMinutes" data-idx="${i}" value="${esc(packShown)}" placeholder="${autoPack}"></div>
+          <div class="budget-op-field" style="display:flex; align-items:flex-end;"><span class="timeline-hint" style="margin:0;">Starts at ¾ of the set up time — change it if this day differs.</span></div>
+        </div>
+        ${t ? `<div class="timeline-hint" style="margin-top:6px;">Shooting runs ${esc(minutesToClock(t.shootStart))}${t.shootEnd !== null ? ' – ' + esc(minutesToClock(t.shootEnd)) : ''}.</div>` : ''}
         <div class="budget-op-fields" style="margin-top:8px;">
           <div class="budget-op-field"><label>Drive time from studio (mins)</label><input type="number" inputmode="numeric" data-schedfield="driveMinutes" data-idx="${i}" value="${esc(day.driveMinutes||'')}" placeholder="0"></div>
           <div class="budget-op-field" style="display:flex; align-items:flex-end;">
@@ -6597,12 +7075,64 @@ function openScheduleModal(project, step, sideRight){
         ` : ''}`;
   }
 
-  // the fuller, original layout for short films / music videos: morning schedule as its own
-  // section, and "Scenes for this day" showing the bar chart, computed range, ≈time-per-shot,
-  // and drive-to-X inline — distinct from the simplified wedding layout below
+  // one scene: tap it to change how long it takes (the other scenes then share what's left)
+  function sceneRowHtml(day, i, g, groups, showPerShot){
+    const key = sceneKey(i, g.scene);
+    const open = editingScene === key;
+    const suggested = open ? suggestedMinutes(day, groups, g.scene) : null;
+    return `
+      <div class="sched-item-wrap">
+        <div class="sched-item sched-clickable${open ? ' sched-open' : ''}" data-editscene="${esc(key)}" title="Tap to change how long this scene takes">
+          <div class="sched-item-scene">${esc(g.scene)}${g.shooter ? ` <span class="sched-shooter-badge">Cam ${esc(g.shooter)}</span>` : ''}</div>
+          <div class="sched-item-meta">${g.count} shot${g.count===1?'':'s'}${g.range ? ' · ' + esc(g.range) : ''}${g.custom ? ' · edited' : ''}</div>
+        </div>
+        ${showPerShot && g.perShotMin !== null && !open ? `<div class="sched-info-box">≈ ${g.perShotMin} min per shot (${g.minutes} min split across ${g.count} shot${g.count===1?'':'s'})</div>` : ''}
+        ${open ? `
+        <div class="sched-edit-box">
+          <label class="loc-label" style="margin-top:0;">Time for this scene (mins)</label>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <input type="number" inputmode="numeric" min="1" data-scenemin="${esc(key)}" value="${g.custom ? esc(String(g.minutes)) : ''}" placeholder="${suggested !== null ? suggested : ''}" style="flex:1;">
+            ${g.custom ? `<button type="button" class="btn small" data-scenereset="${esc(key)}">Use suggested</button>` : ''}
+          </div>
+          <div class="timeline-hint" style="margin:4px 0 0;">${suggested !== null ? `Suggested: ${suggested} min. ` : 'Set arrive and leave times to see a suggestion. '}The other scenes adjust to fit.</div>
+        </div>` : ''}
+      </div>`;
+  }
+
+  // scenes in order, with lunch, and a set up change (or an "add" button) between each pair of scenes
+  function scheduleListHtml(day, i, alloc, groups, showPerShot){
+    return alloc.items.map(g => {
+      if(g.isLunch) return `
+        <div class="sched-item-wrap">
+          <div class="sched-item sched-lunch"><div class="sched-item-scene">Lunch break</div><div class="sched-item-meta">${esc(g.range)}</div></div>
+        </div>`;
+      const key = sceneKey(i, g.scene);
+      if(g.isChange) return `
+        <div class="sched-item-wrap">
+          <div class="sched-item sched-drive"><div class="sched-item-scene">Set up change</div><div class="sched-item-meta">${g.range ? esc(g.range) : ''}</div></div>
+          <div style="display:flex; gap:8px; align-items:flex-end; margin:6px 0;">
+            <div style="flex:1;"><label class="loc-label" style="margin-top:0;">How long (mins)</label><input type="number" inputmode="numeric" min="0" data-changemin="${esc(key)}" value="${esc(String((day.setupChanges || {})[g.scene] ?? ''))}" placeholder="15"></div>
+            <button type="button" class="btn small danger" data-removechange="${esc(key)}">Remove</button>
+          </div>
+        </div>`;
+      const hasChange = (day.setupChanges || {})[g.scene] !== undefined;
+      return sceneRowHtml(day, i, g, groups, showPerShot)
+        + (!g.isLast && !hasChange ? `<button type="button" class="btn small ghost" data-addchange="${esc(key)}" style="width:100%; margin:6px 0;">+ Add setup change</button>` : '');
+    }).join('');
+  }
+
+  function scheduleHintsHtml(day, alloc){
+    if(!day.start || !day.end) return `<div class="timeline-hint" style="margin-top:8px;">Set arrive and leave times to allocate time to each scene.</div>`;
+    if(alloc.tooShort) return `<div class="timeline-hint" style="margin-top:8px; color:var(--out);">Pack down starts before shooting does — leave later, or shorten set up, debrief or pack down.</div>`;
+    if(alloc.overMin > 0) return `<div class="timeline-hint" style="margin-top:8px; color:var(--out);">Scenes run ${alloc.overMin} min past the start of pack down — shorten a scene or leave later.</div>`;
+    return '';
+  }
+
+  // the fuller layout for short films / music videos: morning schedule as its own section, then the
+  // scene list with a bar chart, computed range and ≈time-per-shot, then the end-of-day beats
   function dayHtmlStandard(day, i){
     const groups = sceneGroups(day.date);
-    const allocated = allocate(day, groups);
+    const alloc = allocateScenes(day, groups);
     const morning = morningSchedule(day);
     const onSet = operatorsForDay(day.date);
     return `
@@ -6612,48 +7142,21 @@ function openScheduleModal(project, step, sideRight){
         ${morning ? `
           <div class="sched-morning">
             <div class="loc-label" style="margin-top:10px;">Morning schedule — from ${esc(STUDIO_ADDRESS)}</div>
-            <div class="sched-item"><div class="sched-item-scene">Leave studio</div><div class="sched-item-meta">${esc(morning.leaveStudio)}</div></div>
-            <div class="sched-item"><div class="sched-item-scene">Arrive location</div><div class="sched-item-meta">${esc(morning.arriveLocation)}</div></div>
-            <div class="sched-item"><div class="sched-item-scene">Equipment set up</div><div class="sched-item-meta">${esc(morning.setupRange)}</div></div>
-            <div class="sched-item"><div class="sched-item-scene">Debrief</div><div class="sched-item-meta">${esc(morning.debriefRange)}</div></div>
-            <div class="sched-item"><div class="sched-item-scene">Start</div><div class="sched-item-meta">${esc(morning.startClock)}</div></div>
+            ${morningItemsHtml(morning)}
           </div>
-        ` : `<div class="timeline-hint" style="margin-top:8px;">Set a start time to work out the morning schedule from the studio.</div>`}
+        ` : `<div class="timeline-hint" style="margin-top:8px;">Set an arrival time to work out the morning schedule from the studio.</div>`}
         ${groups.length ? `
           <div class="loc-label" style="margin-top:12px;">Scenes for this day</div>
-          <div class="sched-bar">${allocated.map(g => `<span class="sched-seg${g.isLunch?' sched-seg-lunch':''}${g.isDrive?' sched-seg-drive':''}" style="flex-grow:${g.isLunch ? 3 : g.isDrive ? Math.max(1, Math.round(g.driveMin/5)) : g.count};" title="${g.isLunch ? 'Lunch' : g.isDrive ? 'Drive to ' + g.scene : esc(g.scene)}"></span>`).join('')}</div>
-          <div class="sched-list">
-            ${allocated.map(g => {
-              if(g.isLunch) return `
-                <div class="sched-item-wrap">
-                  <div class="sched-item sched-lunch"><div class="sched-item-scene">Lunch break</div><div class="sched-item-meta">${esc(g.range)}</div></div>
-                </div>`;
-              if(g.isDrive) return `
-                <div class="sched-item-wrap">
-                  <div class="sched-item sched-drive"><div class="sched-item-scene">Drive to ${esc(g.scene)}</div><div class="sched-item-meta">${g.driveMin} min · ${esc(g.range)}</div></div>
-                </div>`;
-              return `
-              <div class="sched-item-wrap">
-                <div class="sched-item">
-                  <div class="sched-item-scene">${esc(g.scene)}${g.shooter ? ` <span class="sched-shooter-badge">Cam ${esc(g.shooter)}</span>` : ''}</div>
-                  <div class="sched-item-meta">${g.count} shot${g.count===1?'':'s'}${g.range ? ' · ' + esc(g.range) : ''}</div>
-                </div>
-                ${g.perShotMin !== null ? `<div class="sched-info-box">≈ ${g.perShotMin} min per shot (${g.range} split across ${g.count} shot${g.count===1?'':'s'})</div>` : ''}
-                <div class="budget-op-fields" style="margin-top:6px;">
-                  <div class="budget-op-field"><label>Custom time (optional)</label>${timeFieldHtml('schedscene-' + i + '__' + encodeURIComponent(g.scene), (day.sceneTimes && day.sceneTimes[g.scene]) || '')}</div>
-                  <div class="budget-op-field"><label>Drive time before (mins)</label><input type="number" inputmode="numeric" min="0" data-drivetime="${i}__${esc(g.scene)}" value="${esc((day.driveTimes && day.driveTimes[g.scene]) || '')}" placeholder="0"></div>
-                </div>
-              </div>`;
-            }).join('')}
-          </div>
-          ${(!day.start || !day.end) ? `<div class="timeline-hint" style="margin-top:8px;">Set a start and end time to allocate times per scene, and see time per shot.</div>` : ''}
+          <div class="sched-bar">${alloc.items.map(g => `<span class="sched-seg${g.isLunch?' sched-seg-lunch':''}${g.isChange?' sched-seg-drive':''}" style="flex-grow:${Math.max(1, g.minutes !== null && g.minutes !== undefined ? g.minutes : (g.count || 1))};" title="${g.isLunch ? 'Lunch' : g.isChange ? 'Set up change' : esc(g.scene)}"></span>`).join('')}</div>
+          <div class="sched-list">${scheduleListHtml(day, i, alloc, groups, true)}</div>
+          ${scheduleHintsHtml(day, alloc)}
           ${['A','B'].map(letter => {
-            const tl = shooterTimeline(allocated, letter);
+            const tl = shooterTimeline(alloc.items, letter);
             return tl.length ? `
               <div class="loc-label" style="margin-top:14px;">Shooter ${letter} timeline</div>
               <div class="sched-list">
-                ${tl.map(g => g.isDrive
-                  ? `<div class="sched-item sched-drive"><div class="sched-item-scene">Driving</div><div class="sched-item-meta">${g.driveMin} min</div></div>`
+                ${tl.map(g => g.isChange
+                  ? `<div class="sched-item sched-drive"><div class="sched-item-scene">Set up change</div><div class="sched-item-meta">${g.minutes} min</div></div>`
                   : `<div class="sched-item"><div class="sched-item-scene">${esc(g.scene)}</div><div class="sched-item-meta">${g.range ? esc(g.range) : ''}</div></div>`
                 ).join('')}
               </div>` : '';
@@ -6662,14 +7165,19 @@ function openScheduleModal(project, step, sideRight){
           <p class="empty small">${(!shotStep || !shotStep.shotListRows || !shotStep.shotListRows.length) ? 'Your Shot list is empty — add shots there first.' : 'No shots matched to this day yet.'}</p>
           ${(shotStep && shotStep.shotListRows && shotStep.shotListRows.length) ? `<button type="button" class="btn small" data-assignallday="${i}" style="width:100%; margin-top:6px;">Assign all shots to this day</button>` : ''}
         `}
+        ${morning && morning.end ? `
+          <div class="sched-morning">
+            <div class="loc-label" style="margin-top:12px;">End of day</div>
+            ${endItemsHtml(morning)}
+          </div>` : ''}
       </div>`;
   }
 
-  // the simplified wedding layout: no bar chart, no per-shot time-split box, driving time only
-  // shown inline within each shooter's own timeline (which also carries the morning schedule)
+  // the simplified wedding layout: no bar chart or per-shot time-split box; each shooter's own
+  // timeline carries the morning schedule and the end-of-day beats
   function dayHtmlWedding(day, i){
     const groups = sceneGroups(day.date);
-    const allocated = allocate(day, groups);
+    const alloc = allocateScenes(day, groups);
     const morning = morningSchedule(day);
     const onSet = operatorsForDay(day.date);
     return `
@@ -6678,37 +7186,20 @@ function openScheduleModal(project, step, sideRight){
         ${dayCastCrewHtml(i, onSet, day.others)}
         ${groups.length ? `
           <div class="loc-label" style="margin-top:12px;">Scenes for this day</div>
-          <div class="sched-list">
-            ${groups.map(g => `
-              <div class="sched-item-wrap">
-                <div class="sched-item">
-                  <div class="sched-item-scene">${esc(g.scene)}${g.shooter ? ` <span class="sched-shooter-badge">Cam ${esc(g.shooter)}</span>` : ''}</div>
-                </div>
-                <div class="budget-op-fields" style="margin-top:6px;">
-                  <div class="budget-op-field"><label>Custom time (optional)</label>${timeFieldHtml('schedscene-' + i + '__' + encodeURIComponent(g.scene), (day.sceneTimes && day.sceneTimes[g.scene]) || '')}</div>
-                  <div class="budget-op-field"><label>Driving time from previous location (mins)</label><input type="number" inputmode="numeric" min="0" data-drivetime="${i}__${esc(g.scene)}" value="${esc((day.driveTimes && day.driveTimes[g.scene]) || '')}" placeholder="0"></div>
-                </div>
-              </div>`).join('')}
-          </div>
-          ${(!day.start || !day.end) ? `<div class="timeline-hint" style="margin-top:8px;">Set a start and end time to work out each shooter's timeline.</div>` : ''}
+          <div class="sched-list">${scheduleListHtml(day, i, alloc, groups, false)}</div>
+          ${scheduleHintsHtml(day, alloc)}
           ${['A','B'].map(letter => {
-            const tl = shooterTimeline(allocated, letter);
+            const tl = shooterTimeline(alloc.items, letter);
             if(!tl.length) return '';
             return `
               <div class="loc-label" style="margin-top:14px;">Shooter ${letter} timeline</div>
               <div class="sched-list">
-                ${morning ? `
-                  <div class="sched-item"><div class="sched-item-scene">Leave studio</div><div class="sched-item-meta">${esc(morning.leaveStudio)}</div></div>
-                  ${morning.driveMin > 0 ? `<div class="sched-item sched-drive"><div class="sched-item-scene">Driving</div><div class="sched-item-meta">${morning.driveMin} min</div></div>` : ''}
-                  <div class="sched-item"><div class="sched-item-scene">Arrive location</div><div class="sched-item-meta">${esc(morning.arriveLocation)}</div></div>
-                  <div class="sched-item"><div class="sched-item-scene">Equipment set up</div><div class="sched-item-meta">${esc(morning.setupRange)}</div></div>
-                  <div class="sched-item"><div class="sched-item-scene">Debrief</div><div class="sched-item-meta">${esc(morning.debriefRange)}</div></div>
-                  <div class="sched-item"><div class="sched-item-scene">Start</div><div class="sched-item-meta">${esc(morning.startClock)}</div></div>
-                ` : `<div class="timeline-hint">Set a start time to work out the morning schedule from the studio.</div>`}
-                ${tl.map(g => g.isDrive
-                  ? `<div class="sched-item sched-drive"><div class="sched-item-scene">Driving</div><div class="sched-item-meta">${g.driveMin} min</div></div>`
+                ${morning ? morningItemsHtml(morning) : `<div class="timeline-hint">Set an arrival time to work out the morning schedule from the studio.</div>`}
+                ${tl.map(g => g.isChange
+                  ? `<div class="sched-item sched-drive"><div class="sched-item-scene">Set up change</div><div class="sched-item-meta">${g.minutes} min</div></div>`
                   : `<div class="sched-item"><div class="sched-item-scene">${esc(g.scene)}</div><div class="sched-item-meta">${g.range ? esc(g.range) : ''}</div></div>`
                 ).join('')}
+                ${endItemsHtml(morning)}
               </div>`;
           }).join('')}
         ` : `
@@ -6813,15 +7304,49 @@ function openScheduleModal(project, step, sideRight){
         persistSchedule();
       });
     });
-    bg.querySelectorAll('[data-timefield^="schedscene-"]').forEach(el => {
+    // tap a scene to open its "how long" box
+    bg.querySelectorAll('[data-editscene]').forEach(el => {
+      el.addEventListener('click', () => {
+        editingScene = editingScene === el.dataset.editscene ? null : el.dataset.editscene;
+        paint();
+      });
+    });
+    bg.querySelectorAll('[data-scenemin]').forEach(el => {
+      const { dayIdx, scene } = parseSceneKey(el.dataset.scenemin);
       el.addEventListener('change', () => {
-        const hidden = document.getElementById(el.dataset.timefield);
-        const rest = el.dataset.timefield.slice('schedscene-'.length);
-        const sep = rest.indexOf('__');
-        const dayIdx = parseInt(rest.slice(0, sep), 10);
-        const scene = decodeURIComponent(rest.slice(sep + 2));
-        if(!days[dayIdx].sceneTimes) days[dayIdx].sceneTimes = {};
-        days[dayIdx].sceneTimes[scene] = hidden.value;
+        const n = parseFloat(el.value);
+        if(n > 0) days[dayIdx].sceneMinutes[scene] = String(n);
+        else delete days[dayIdx].sceneMinutes[scene];
+        paint();
+        persistSchedule();
+      });
+    });
+    bg.querySelectorAll('[data-scenereset]').forEach(el => {
+      el.addEventListener('click', () => {
+        const { dayIdx, scene } = parseSceneKey(el.dataset.scenereset);
+        delete days[dayIdx].sceneMinutes[scene];
+        paint();
+        persistSchedule();
+      });
+    });
+    // set up changes sit between two scenes, stored against the scene that comes before them
+    bg.querySelectorAll('[data-addchange]').forEach(el => {
+      el.addEventListener('click', () => {
+        const { dayIdx, scene } = parseSceneKey(el.dataset.addchange);
+        days[dayIdx].setupChanges[scene] = '15';
+        paint();
+        persistSchedule();
+      });
+    });
+    bg.querySelectorAll('[data-changemin]').forEach(el => {
+      const { dayIdx, scene } = parseSceneKey(el.dataset.changemin);
+      el.addEventListener('input', () => { days[dayIdx].setupChanges[scene] = el.value; });
+      el.addEventListener('change', () => { paint(); persistSchedule(); });
+    });
+    bg.querySelectorAll('[data-removechange]').forEach(el => {
+      el.addEventListener('click', () => {
+        const { dayIdx, scene } = parseSceneKey(el.dataset.removechange);
+        delete days[dayIdx].setupChanges[scene];
         paint();
         persistSchedule();
       });
@@ -6837,16 +7362,6 @@ function openScheduleModal(project, step, sideRight){
         showToast(ok ? 'All shots assigned to this day' : 'Save failed', !ok);
         if(ok) paint();
       });
-    });
-    bg.querySelectorAll('[data-drivetime]').forEach(el => {
-      el.addEventListener('input', () => {
-        const [dayIdx, scene] = el.dataset.drivetime.split('__');
-        if(!days[dayIdx].driveTimes) days[dayIdx].driveTimes = {};
-        days[dayIdx].driveTimes[scene] = el.value;
-        // no paint() here — rebuilding the whole panel on every keystroke destroys and recreates
-        // this input, kicking focus out and jumping the scroll position while typing
-      });
-      el.addEventListener('change', () => { paint(); persistSchedule(); });
     });
     bg.querySelector('#schedSave').addEventListener('click', () => {
       bg.remove();
@@ -7147,33 +7662,205 @@ function openBriefModal(project, step, sideRight){
 function openStepModal(project, step, presetStage, sideRight){
   closeSidePanels();
   const isNew = !step;
+  const stepType = step ? (step.stepType || 'standard') : 'standard';
+  const checklistItems = step && step.checklistItems ? JSON.parse(JSON.stringify(step.checklistItems)) : [];
+  const datedItems = step && step.datedItems ? JSON.parse(JSON.stringify(step.datedItems)) : [];
+  let currentType = stepType; // only changeable when creating a new step
   const bg = document.createElement('div');
   bg.className = 'modal-bg' + (sideRight ? ' side-right' : '');
-  bg.innerHTML = `
+
+  function typeBodyHtml(){
+    if(currentType === 'checklist'){
+      return `
+        <div class="field"><label>Checklist</label></div>
+        <div id="checklistItemsList">${checklistItems.map(item => `
+          <div class="checklist-row" data-checkid="${item.id}">
+            <input type="checkbox" data-checkfield="checked" data-checkid="${item.id}" ${item.checked?'checked':''}>
+            <input type="text" data-checkfield="text" data-checkid="${item.id}" placeholder="Item…" value="${esc(item.text||'')}">
+            <button type="button" class="mo-btn" data-removecheck="${item.id}" aria-label="Remove">✕</button>
+          </div>`).join('')}</div>
+        <button type="button" class="btn small" id="addChecklistItem" style="width:100%; margin:8px 0 14px;">+ Add item</button>`;
+    }
+    if(currentType === 'dated'){
+      return `
+        <div class="field"><label>Dates</label></div>
+        <div id="datedItemsList">${datedItems.map(item => `
+          <div class="card-sub" style="padding:12px; margin-bottom:10px;" data-datedid="${item.id}">
+            <div class="field"><label>Date</label>${dateFieldHtml('dateditemdate-'+item.id, item.date)}</div>
+            <div class="field"><label>What's happening</label><textarea data-datedfield="description" data-datedid="${item.id}" placeholder="What's happening on this date…">${esc(item.description||'')}</textarea></div>
+            <button type="button" class="btn small ghost" data-removedated="${item.id}" style="width:100%;">Remove date</button>
+          </div>`).join('')}</div>
+        <button type="button" class="btn small" id="addDatedItem" style="width:100%; margin:8px 0 14px;">+ Add date</button>`;
+    }
+    return `<div class="field"><label>Description</label><textarea id="stDesc" placeholder="What this step involves…">${esc(step ? step.description : '')}</textarea></div>`;
+  }
+
+  function paint(){
+    const prevModal = bg.querySelector('.modal');
+    const scrollTop = prevModal ? prevModal.scrollTop : 0;
+    // preserve in-progress field values (title/who/dates) across a type-switch repaint
+    const prevTitle = bg.querySelector('#stTitle');
+    const carry = {
+      title: prevTitle ? prevTitle.value : (step ? step.title : ''),
+      who: bg.querySelector('#stWho') ? bg.querySelector('#stWho').value : (step ? step.who : ''),
+      startDate: bg.querySelector('#stStartDate') ? bg.querySelector('#stStartDate').value : (step ? step.startDate : ''),
+      endDate: bg.querySelector('#stEndDate') ? bg.querySelector('#stEndDate').value : (step ? step.endDate : ''),
+      stage: bg.querySelector('#stStage') ? bg.querySelector('#stStage').value : (step ? step.stage : presetStage),
+    };
+    bg.innerHTML = `
     <div class="modal">
       <h3>${isNew ? 'Add step' : 'Edit step'}</h3>
-      <div class="field"><label>Step name</label><input type="text" id="stTitle" placeholder="e.g. Blocking and storyboarding" value="${esc(step ? step.title : '')}"></div>
+      ${isNew ? `
+        <div class="field"><label>Step type</label>
+          <div class="preset-row">
+            <button type="button" class="btn small pill-outline ${currentType==='standard'?'active':''}" data-steptype="standard" style="flex:1;">Standard</button>
+            <button type="button" class="btn small pill-outline ${currentType==='checklist'?'active':''}" data-steptype="checklist" style="flex:1;">Checklist</button>
+            <button type="button" class="btn small pill-outline ${currentType==='dated'?'active':''}" data-steptype="dated" style="flex:1;">Dated</button>
+          </div>
+        </div>` : ''}
+      <div class="field"><label>Step name</label><input type="text" id="stTitle" placeholder="e.g. Blocking and storyboarding" value="${esc(carry.title)}"></div>
       <div class="field"><label>Stage</label>
-        <select id="stStage">${STAGES.map(s => `<option value="${s.key}" ${(step?step.stage:presetStage)===s.key?'selected':''}>${s.label}</option>`).join('')}</select>
+        <select id="stStage">${STAGES.map(s => `<option value="${s.key}" ${carry.stage===s.key?'selected':''}>${s.label}</option>`).join('')}</select>
       </div>
-      ${isNew ? `<div class="field"><label>Position</label><select id="stPosition">${positionOptionsHtml(project, presetStage, 'end')}</select></div>` : ''}
-      <div class="field"><label>Who</label><input type="text" id="stWho" placeholder="e.g. owen / both" value="${esc(step ? step.who : '')}"></div>
+      ${isNew ? `<div class="field"><label>Position</label><select id="stPosition">${positionOptionsHtml(project, carry.stage, 'end')}</select></div>` : ''}
+      <div class="field"><label>Who</label><input type="text" id="stWho" placeholder="e.g. owen / both" value="${esc(carry.who)}"></div>
       <div class="field-row" data-rangepicker>
-        <div class="field"><label>Start date</label>${dateFieldHtml('stStartDate', step ? step.startDate : '')}</div>
-        <div class="field"><label>End date</label>${dateFieldHtml('stEndDate', step ? step.endDate : '')}</div>
+        <div class="field"><label>Start date</label>${dateFieldHtml('stStartDate', carry.startDate)}</div>
+        <div class="field"><label>End date</label>${dateFieldHtml('stEndDate', carry.endDate)}</div>
       </div>
       <div class="script-hint">Tap either date — one calendar sets both.</div>
-      <div class="field"><label>Description</label><textarea id="stDesc" placeholder="What this step involves…">${esc(step ? step.description : '')}</textarea></div>
+      ${typeBodyHtml()}
       ${!isNew ? `<button class="btn danger small" id="stDelete" style="margin-top:10px;">Delete step</button>` : ''}
       <div class="modal-actions">
         <button class="btn ghost" id="stCancel" style="flex:1;">Cancel</button>
         <button class="btn primary" id="stSave" style="flex:1;">${isNew ? 'Add' : 'Save'}</button>
       </div>
     </div>`;
+    const newModal = bg.querySelector('.modal');
+    if(newModal) newModal.scrollTop = scrollTop;
+    autoGrowAll(bg);
+    wire();
+  }
+
+  function wire(){
+    bg.querySelector('#stTitle').focus();
+    bg.querySelector('#stCancel').addEventListener('click', () => bg.remove());
+    bg.querySelectorAll('[data-steptype]').forEach(btn => {
+      btn.addEventListener('click', () => { currentType = btn.dataset.steptype; paint(); });
+    });
+    const stageSel = bg.querySelector('#stStage');
+    const posSel = bg.querySelector('#stPosition');
+    if(posSel){
+      stageSel.addEventListener('change', () => {
+        posSel.innerHTML = positionOptionsHtml(project, stageSel.value, 'end');
+      });
+    }
+    const delBtn = bg.querySelector('#stDelete');
+    if(delBtn){
+      delBtn.addEventListener('click', () => {
+        openConfirmModal(`Delete step "${step.title || 'Untitled step'}"?`, async () => {
+          project.steps = project.steps.filter(s => s.id !== step.id);
+          touchProject(project);
+          const ok = await saveProjects();
+          bg.remove();
+          showToast(ok ? 'Step deleted' : 'Delete failed', !ok);
+          if(ok) render();
+        });
+      });
+    }
+    const addChecklistBtn = bg.querySelector('#addChecklistItem');
+    if(addChecklistBtn) addChecklistBtn.addEventListener('click', () => {
+      checklistItems.push({ id: uid(), text:'', checked:false });
+      paint();
+    });
+    bg.querySelectorAll('[data-removecheck]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = checklistItems.findIndex(i => i.id === btn.dataset.removecheck);
+        if(idx !== -1) checklistItems.splice(idx, 1);
+        paint();
+      });
+    });
+    bg.querySelectorAll('[data-checkfield]').forEach(el => {
+      const evName = el.type === 'checkbox' ? 'change' : 'blur';
+      el.addEventListener(evName, () => {
+        const item = checklistItems.find(i => i.id === el.dataset.checkid);
+        if(!item) return;
+        item[el.dataset.checkfield] = el.type === 'checkbox' ? el.checked : el.value;
+      });
+    });
+    const addDatedBtn = bg.querySelector('#addDatedItem');
+    if(addDatedBtn) addDatedBtn.addEventListener('click', () => {
+      datedItems.push({ id: uid(), date:'', description:'' });
+      paint();
+    });
+    bg.querySelectorAll('[data-removedated]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = datedItems.findIndex(i => i.id === btn.dataset.removedated);
+        if(idx !== -1) datedItems.splice(idx, 1);
+        paint();
+      });
+    });
+    bg.querySelectorAll('[data-datedfield]').forEach(el => {
+      el.addEventListener('blur', () => {
+        const item = datedItems.find(i => i.id === el.dataset.datedid);
+        if(!item) return;
+        item[el.dataset.datedfield] = el.value;
+      });
+    });
+
+    bg.querySelector('#stSave').addEventListener('click', async () => {
+      const title = bg.querySelector('#stTitle').value.trim();
+      if(!title){ showToast('Give the step a name', true); return; }
+      // capture any dated-item date picks that haven't triggered a repaint yet
+      datedItems.forEach(item => {
+        const hidden = bg.querySelector(`#dateditemdate-${item.id}`);
+        if(hidden) item.date = hidden.value;
+      });
+      const now = new Date().toISOString();
+      const data = {
+        title,
+        stage: bg.querySelector('#stStage').value,
+        who: bg.querySelector('#stWho').value.trim(),
+        startDate: bg.querySelector('#stStartDate').value.trim(),
+        endDate: bg.querySelector('#stEndDate').value.trim(),
+        description: currentType === 'standard' ? (bg.querySelector('#stDesc') ? bg.querySelector('#stDesc').value.trim() : '') : (step ? step.description : ''),
+        stepType: isNew ? currentType : stepType,
+        checklistItems: currentType === 'checklist' || stepType === 'checklist' ? checklistItems : (step ? step.checklistItems : undefined),
+        datedItems: currentType === 'dated' || stepType === 'dated' ? datedItems : (step ? step.datedItems : undefined),
+        done: isNew ? false : step.done,
+        updatedAt: now,
+      };
+      if(!isNew) data.completedDate = step.completedDate || '';
+      if(!isNew) data.completionAcked = step.completionAcked;
+      // track a delay: if the end date is pushed to something later than what it was before, keep the
+      // very first committed end date so the Gantt chart can mark where it originally sat
+      if(!isNew){
+        data.originalEndDate = step.originalEndDate || '';
+        if(step.endDate && data.endDate && data.endDate > step.endDate && !data.originalEndDate){
+          data.originalEndDate = step.endDate;
+        } else if(data.originalEndDate && data.endDate && data.endDate <= data.originalEndDate){
+          data.originalEndDate = ''; // no longer delayed relative to the original commitment
+        }
+      }
+      const posSel = bg.querySelector('#stPosition');
+      if(isNew){
+        const newStep = { id: uid(), ...data };
+        const position = posSel ? posSel.value : 'end';
+        insertStepAtPosition(project, newStep, data.stage, position);
+      } else {
+        Object.assign(step, data);
+      }
+      touchProject(project);
+      const ok = await saveProjects();
+      bg.remove();
+      showToast(ok ? (isNew ? 'Step added' : 'Step saved') : 'Save failed', !ok);
+      if(ok) render();
+    });
+  }
+
   presentPanel(bg, (step ? step.id : null));
-  autoGrowAll(bg);
-  bg.querySelector('#stTitle').focus();
   bg.addEventListener('click', ev => {
+    if(ev.target === bg){ bg.remove(); return; }
     const trigger = ev.target.closest('.dfield');
     if(!trigger) return;
     const rangeWrap = trigger.closest('[data-rangepicker]');
@@ -7184,69 +7871,7 @@ function openStepModal(project, step, presetStage, sideRight){
       openDatePicker(trigger);
     }
   });
-  bg.querySelector('#stCancel').addEventListener('click', () => bg.remove());
-  bg.addEventListener('click', ev => { if(ev.target === bg) bg.remove(); });
-  const stageSel = bg.querySelector('#stStage');
-  const posSel = bg.querySelector('#stPosition');
-  if(posSel){
-    stageSel.addEventListener('change', () => {
-      posSel.innerHTML = positionOptionsHtml(project, stageSel.value, 'end');
-    });
-  }
-
-  const delBtn = bg.querySelector('#stDelete');
-  if(delBtn){
-    delBtn.addEventListener('click', () => {
-      openConfirmModal(`Delete step "${step.title || 'Untitled step'}"?`, async () => {
-        project.steps = project.steps.filter(s => s.id !== step.id);
-        touchProject(project);
-        const ok = await saveProjects();
-        bg.remove();
-        showToast(ok ? 'Step deleted' : 'Delete failed', !ok);
-        if(ok) render();
-      });
-    });
-  }
-
-  bg.querySelector('#stSave').addEventListener('click', async () => {
-    const title = bg.querySelector('#stTitle').value.trim();
-    if(!title){ showToast('Give the step a name', true); return; }
-    const now = new Date().toISOString();
-    const data = {
-      title,
-      stage: bg.querySelector('#stStage').value,
-      who: bg.querySelector('#stWho').value.trim(),
-      startDate: bg.querySelector('#stStartDate').value.trim(),
-      endDate: bg.querySelector('#stEndDate').value.trim(),
-      description: bg.querySelector('#stDesc').value.trim(),
-      done: isNew ? false : step.done,
-      updatedAt: now,
-    };
-    if(!isNew) data.completedDate = step.completedDate || '';
-    if(!isNew) data.completionAcked = step.completionAcked;
-    // track a delay: if the end date is pushed to something later than what it was before, keep the
-    // very first committed end date so the Gantt chart can mark where it originally sat
-    if(!isNew){
-      data.originalEndDate = step.originalEndDate || '';
-      if(step.endDate && data.endDate && data.endDate > step.endDate && !data.originalEndDate){
-        data.originalEndDate = step.endDate;
-      } else if(data.originalEndDate && data.endDate && data.endDate <= data.originalEndDate){
-        data.originalEndDate = ''; // no longer delayed relative to the original commitment
-      }
-    }
-    if(isNew){
-      const newStep = { id: uid(), ...data };
-      const position = posSel ? posSel.value : 'end';
-      insertStepAtPosition(project, newStep, data.stage, position);
-    } else {
-      Object.assign(step, data);
-    }
-    project.updatedAt = now;
-    const ok = await saveProjects();
-    bg.remove();
-    showToast(ok ? (isNew ? 'Step added' : 'Step saved') : 'Save failed', !ok);
-    if(ok) render();
-  });
+  paint();
 }
 
 async function refreshAndRender(){
@@ -7715,7 +8340,7 @@ function gearRenderList(app){
       ${preset ? `<button class="btn small ghost" data-preset="" style="flex:none;">Clear</button>` : ''}
     </div>
     <div id="listWrap">
-      ${crates.length ? `<div class="section-label"><span>Crates (${crates.length})</span></div>${crates.map(gearCardHtml).join('')}` : ''}
+      ${crates.length ? `<div class="section-label"><span>Crates (${crates.length})</span></div><div class="table-header-row"><span>name</span><span>category</span><span>location</span><span>contents</span><span>updated</span></div>${crates.map(gearCardHtml).join('')}` : ''}
       ${categoryNames.length ? `
         <div class="section-label"><span>Not in a crate (${loose.length})</span></div>
         ${categoryNames.map(cat => `
@@ -7779,7 +8404,9 @@ function gearCardHtml(e){
     const p = gearById(e.parentId);
     contentsText = `split from ${p ? p.name : 'crate'}`;
   }
-  const metaParts = [e.category, effectiveLocation(e), contentsText].filter(Boolean);
+  const category = e.category || '';
+  const location = effectiveLocation(e);
+  const metaParts = [category, location, contentsText].filter(Boolean);
   return `
     <div class="table-row" id="card-${e.id}">
       <div class="dot ${st}"></div>
@@ -7787,6 +8414,9 @@ function gearCardHtml(e){
         <div class="table-row-name">${esc(displayName(e))}</div>
         <div class="table-row-meta">${metaParts.map(esc).join(' · ')}</div>
       </div>
+      <div class="table-row-col table-row-col-cat">${esc(category)}</div>
+      <div class="table-row-col table-row-col-loc">${esc(location)}</div>
+      <div class="table-row-col table-row-col-contents">${esc(contentsText)}</div>
       <div class="table-row-time">${timeAgo(effectiveUpdatedAt(e))}</div>
     </div>`;
 }
@@ -8529,7 +9159,7 @@ Sarah steps outside. The neighbourhood is quiet, waking up. She takes a deep bre
 
   const schedStep = find('Shooting schedule of day');
   if(schedStep) schedStep.scheduleDays = [shootDate1, shootDate2].map(d => ({
-    date: d, start:'08:00', end:'18:00', driveMinutes:'15', uber:false,
+    date: d, start:'07:00', end:'18:30', driveMinutes:'15', uber:false, setupMinutes:'45', debriefMinutes:'15', packMinutes:'', v2:true,
     lunch:true, lunchStart:'13:00', lunchMinutes:'60', others:[{ id: uid(), text:'Sarah (actor)' }],
   }));
 
