@@ -7735,6 +7735,7 @@ function allocateScenes(day, groups){
   // at the start, the one after) — that scene simply runs on past the block in between
   // no stretch of the day is ever left empty: a stretch with no scene of its own is worked through by
   // the scene before it (or, at the start of the day, the one after it)
+  let squeezed = false;
   const groups2 = [];
   let carry = [];
   segs.forEach(seg => {
@@ -7760,32 +7761,39 @@ function allocateScenes(day, groups){
     const weights = segUnits.map(x => x.W);
     const baseSum = segUnits.reduce((s, x) => s + x.base, 0);
     const wSum = weights.reduce((s, x) => s + x, 0);
+    // scenes before lunch or a fixed-time wall stop there: when their set lengths add up to more than
+    // the time there is, the set lengths are scaled down to fit instead of running over
+    const hardEnd = grp.pieces[grp.pieces.length - 1].after;
+    const fit = (hardEnd && baseSum > len) ? len / baseSum : 1;
+    if(fit < 1) squeezed = true;
+    const sq = v => fit < 1 ? Math.max(1, Math.floor(v * fit)) : v;
+    const laneFixedS = l => l.list.reduce((n, g) => n + (customOf(g) ? sq(tk(customOf(g))) : 0) + (changeAfter(g) !== null ? sq(tk(changeAfter(g))) : 0), 0);
     const flexTotal = wSum ? len - baseSum : mins.reduce((s, x) => s + x, 0);
     const flex = splitTicks(Math.max(flexTotal, mins.reduce((s, x) => s + x, 0)), weights.map(w => w || 0), mins);
     let cursor = 0;
     segUnits.forEach((x, k) => {
-      const D = x.base + (wSum ? flex[k] : 0) || x.minD;
+      const D = fit < 1 ? Math.max(1, ...x.lanes.map(l => laneFixedS(l) + l.nFlex)) : (x.base + (wSum ? flex[k] : 0) || x.minD);
       const unit = x.u;
       const unitStart = cursor, unitEnd = cursor + D;
       const laneItems = {};
       x.lanes.forEach(l => {
         laneItems[l.key] = [];
         const flexList = l.list.filter(g => !customOf(g));
-        const avail = Math.max(D - l.fixed, flexList.length);
+        const avail = Math.max(D - (fit < 1 ? laneFixedS(l) : l.fixed), flexList.length);
         const alloc = splitTicks(avail, flexList.map(g => g.count), flexList.map(() => 1));
         let c = unitStart, fi = 0;
         l.list.forEach(g => {
           const cu = customOf(g);
-          const dT = cu ? tk(cu) : alloc[fi++];
+          const dT = cu ? sq(tk(cu)) : alloc[fi++];
           const sc = mkScene(unit, l.key, g);
           sc.minutes = dT * T; sc.startMin = at(c, false) * T; sc.endMin = at(c + dT, true) * T; sc.range = rng(c, c + dT);
-          sc.perShotMin = Math.round(sc.minutes / g.count);
+          sc.perShotMin = Math.round(sc.minutes / g.count); if(cu && fit < 1) sc.shortened = true;
           laneItems[l.key].push(sc);
           c += dT;
           const ch = changeAfter(g);
           if(ch !== null){
-            const cT = tk(ch);
-            laneItems[l.key].push({ isChange:true, scene:g.scene, minutes:ch, lane: sc.lane, startMin:at(c, false) * T, endMin:at(c + cT, true) * T, range: rng(c, c + cT) });
+            const cT = sq(tk(ch));
+            laneItems[l.key].push({ isChange:true, scene:g.scene, minutes:cT * T, lane: sc.lane, startMin:at(c, false) * T, endMin:at(c + cT, true) * T, range: rng(c, c + cT) });
             c += cT;
           }
         });
@@ -7804,7 +7812,7 @@ function allocateScenes(day, groups){
     if(en.kind === 'unit') Object.keys(en.lanes).forEach(key => en.lanes[key].forEach(it => items.push(it)));
     else if(en.kind === 'block') items.push({ isBlock:true, isLunch: en.isLunch, label:en.label, id:en.id, minutes:en.minutes, startMin:en.startMin, endMin:en.endMin, range:en.range });
   });
-  return { items, timeline: entries, units, parallel, overMin: overTicks * T, tooShort: we <= ws };
+  return { items, timeline: entries, units, parallel, overMin: overTicks * T, squeezed, tooShort: we <= ws };
 }
 
 function openScheduleModal(project, step, sideRight){
@@ -8011,7 +8019,7 @@ function openScheduleModal(project, step, sideRight){
       <div class="sched-item-wrap">
         <div class="sched-item sched-clickable${open ? ' sched-open' : ''}" data-editscene="${esc(key)}" title="Tap to edit this period">
           <div class="sched-item-scene">${esc(g.scene)}${g.shooter ? ` <span class="sched-shooter-badge">${g.shooter === 'Both' ? 'Both cameras' : 'Cam ' + esc(g.shooter)}</span>` : ''}${loc ? `<div class="sched-loc">${esc(loc)}</div>` : ''}</div>
-          <div class="sched-item-meta">${g.count} shot${g.count===1?'':'s'}${g.range ? '<br>' + esc(g.range) : ''}${g.custom ? ' · edited' : ''}</div>
+          <div class="sched-item-meta">${g.count} shot${g.count===1?'':'s'}${g.range ? '<br>' + esc(g.range) : ''}${g.shortened ? ' · shortened' : g.custom ? ' · edited' : ''}</div>
         </div>
         ${showPerShot && g.perShotMin !== null && !open ? `<div class="sched-info-box">≈ ${g.perShotMin} min per shot (${g.minutes} min split across ${g.count} shot${g.count===1?'':'s'})</div>` : ''}
         ${open ? `
@@ -8092,6 +8100,7 @@ function openScheduleModal(project, step, sideRight){
   function scheduleHintsHtml(day, alloc){
     if(!day.start || !day.end) return `<div class="timeline-hint" style="margin-top:8px;">Set arrive and leave times to allocate time to each scene.</div>`;
     if(alloc.tooShort) return `<div class="timeline-hint" style="margin-top:8px; color:var(--out);">Pack down starts before shooting does — leave later, or shorten set up, debrief or pack down.</div>`;
+    if(alloc.squeezed) return `<div class="timeline-hint" style="margin-top:8px; color:var(--out);">The scenes before lunch or a fixed time add up to more than the time there is, so their set lengths were shortened to stop there — shorten a scene, move the fixed time later, or move a scene after it.</div>`;
     if(alloc.overMin > 0) return `<div class="timeline-hint" style="margin-top:8px; color:var(--out);">Scenes run ${alloc.overMin} min past the start of pack down — shorten a scene or leave later.</div>`;
     return '';
   }
