@@ -7688,22 +7688,15 @@ function allocateScenes(day, groups){
   const entries = []; // timeline entries, unsorted
   // a stretch of time left with no scenes of its own is worked through by the scene before it (or,
   // at the start, the one after) — that scene simply runs on past the block in between
+  // no stretch of the day is ever left empty: a stretch with no scene of its own is worked through by
+  // the scene before it (or, at the start of the day, the one after it)
   const groups2 = [];
   let carry = [];
-  const freeRow = seg => entries.push({ kind:'free', label:'Free time', startMin:seg.s * T, endMin:seg.e * T, range: clk(seg.s, seg.e), sortAt:seg.s, order:0 });
-  segs.forEach((seg, k) => {
-    if(seg.units.length){
-      // an empty stretch just before is worked through by this group only if a block (not a fixed-time wall) sits between
-      if(carry.length && !(carry[carry.length - 1] === segs[k - 1] && carry[carry.length - 1].after === 'block')){ carry.forEach(freeRow); carry = []; }
-      groups2.push({ pieces: carry.concat([seg]), units: seg.units, last: seg }); carry = [];
-    } else {
-      const lastG = groups2[groups2.length - 1];
-      if(lastG && lastG.last === segs[k - 1] && seg.before === 'block'){ lastG.pieces.push(seg); lastG.last = seg; }
-      else if(seg.after === 'block' && k < segs.length - 1 && (!carry.length || carry[carry.length - 1] === segs[k - 1])) carry.push(seg);
-      else freeRow(seg);
-    }
+  segs.forEach(seg => {
+    if(seg.units.length){ groups2.push({ pieces: carry.concat([seg]), units: seg.units }); carry = []; }
+    else if(groups2.length) groups2[groups2.length - 1].pieces.push(seg);
+    else carry.push(seg);
   });
-  carry.forEach(freeRow);
   groups2.forEach(grp => {
     const len = grp.pieces.reduce((n, p) => n + (p.e - p.s), 0);
     const segUnits = grp.units;
@@ -8054,7 +8047,6 @@ function openScheduleModal(project, step, sideRight){
   function scheduleHintsHtml(day, alloc){
     if(!day.start || !day.end) return `<div class="timeline-hint" style="margin-top:8px;">Set arrive and leave times to allocate time to each scene.</div>`;
     if(alloc.tooShort) return `<div class="timeline-hint" style="margin-top:8px; color:var(--out);">Pack down starts before shooting does — leave later, or shorten set up, debrief or pack down.</div>`;
-    if(alloc.timeline.some(en => en.kind === 'free')) return `<div class="timeline-hint" style="margin-top:8px;">There's time with nothing scheduled around the fixed times — add shots, or move a fixed time.</div>`;
     if(alloc.overMin > 0) return `<div class="timeline-hint" style="margin-top:8px; color:var(--out);">Scenes run ${alloc.overMin} min past the start of pack down — shorten a scene or leave later.</div>`;
     return '';
   }
