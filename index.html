@@ -7625,12 +7625,12 @@ function allocateScenes(day, groups){
   // blocks hold time free; a fixed time with no length is a wall — scenes before it stop there and
   // scenes after it start there (nothing runs across it)
   const cuts = blocks.map(b => ({ s:b.s, e:b.e, kind:'block' }))
-    .concat(points.filter(p => p.at > ws && p.at < we).map(p => ({ s:p.at, e:p.at, kind:'point' })))
+    .concat(points.filter(p => p.at > ws && p.at < we).map(p => ({ s:p.at, e:p.at, kind:'point', id:p.id })))
     .sort((a, b) => (a.s - b.s) || (a.kind === 'point' ? -1 : 1));
   cur = ws;
   let prevKind = null;
   cuts.forEach(c => {
-    if(c.s > cur){ segs.push({ s:cur, e:c.s, units:[], before:prevKind, after:c.kind }); prevKind = c.kind; cur = Math.max(cur, c.e); }
+    if(c.s > cur){ segs.push({ s:cur, e:c.s, units:[], before:prevKind, after:c.kind, afterId:c.id }); prevKind = c.kind; cur = Math.max(cur, c.e); }
     else if(c.kind === 'block'){ prevKind = 'block'; cur = Math.max(cur, c.e); }
   });
   if(cur < we) segs.push({ s:cur, e:we, units:[], before:prevKind, after:null });
@@ -7664,14 +7664,26 @@ function allocateScenes(day, groups){
   const pre = [0]; raws.forEach(r => pre.push(pre[pre.length - 1] + r));
   const nU = info.length, nS = segs.length;
   const counts = segs.map(() => 0);
-  if(nS){
+  // where a scene has been put before or after a fixed-time wall by hand (the running order carries
+  // the walls too), the units on each side of that wall are fixed
+  const order = day.sceneOrder || [];
+  const unitPos = info.map(x => Math.min(...Object.values(x.u.lanes).flat().map(g => { const p = order.indexOf(g.scene); return p < 0 ? Infinity : p; })));
+  const needBefore = {};
+  segs.forEach(sg => {
+    if(!sg.afterId) return;
+    const tp = order.indexOf('@' + sg.afterId);
+    if(tp >= 0) needBefore[sg.afterId] = unitPos.filter(p => p < tp).length;
+  });
+  const tryDp = (useWalls) => {
     const INF = Infinity;
     const dp = Array.from({ length: nS + 1 }, () => new Array(nU + 1).fill(INF));
     const from = Array.from({ length: nS + 1 }, () => new Array(nU + 1).fill(0));
     dp[0][0] = 0;
     for(let k = 1; k <= nS; k++){
       const len = segs[k - 1].e - segs[k - 1].s;
+      const wallId = segs[k - 1].afterId;
       for(let i = 0; i <= nU; i++){
+        if(useWalls && wallId && needBefore[wallId] !== undefined && i !== needBefore[wallId]) continue;
         for(let j = 0; j <= i; j++){
           if(dp[k - 1][j] === INF) continue;
           const c = dp[k - 1][j] + Math.pow(pre[i] - pre[j] - len, 2) * (i === j ? 4 : 1); // leaving a stretch empty costs extra
@@ -7679,9 +7691,12 @@ function allocateScenes(day, groups){
         }
       }
     }
+    if(dp[nS][nU] === INF) return false;
     let i = nU;
     for(let k = nS; k >= 1; k--){ const j = from[k][i]; counts[k - 1] = i - j; i = j; }
-  }
+    return true;
+  };
+  if(nS && !tryDp(true)) tryDp(false);
   { let at = 0; segs.forEach((sg, k) => { sg.units = info.slice(at, at + counts[k]); at += counts[k]; }); }
 
   let overTicks = 0;
@@ -7751,7 +7766,7 @@ function allocateScenes(day, groups){
     if(cursor > len) overTicks += cursor - len;
   });
   blocks.forEach(b => entries.push({ kind:'block', block:b, label:b.label, isLunch:b.kind === 'lunch', startMin:b.s * T, endMin:b.e * T, range: clk(b.s, b.e), minutes:(b.e - b.s) * T, id:b.id, sortAt:b.s, order:0 }));
-  points.forEach(p => entries.push({ kind:'point', label:p.label, id:p.id, startMin:p.at * T, endMin:p.at * T, range: minutesToClock(p.at * T), sortAt:p.at, order:1 }));
+  points.forEach(p => entries.push({ kind:'point', label:p.label, id:p.id, startMin:p.at * T, endMin:p.at * T, range: minutesToClock(p.at * T), sortAt:p.at, order:-1 }));
   entries.sort((a, b) => (a.sortAt - b.sortAt) || ((a.order || 0) - (b.order || 0)));
 
   const items = [];
@@ -8326,9 +8341,30 @@ function openScheduleModal(project, step, sideRight){
     showToast('Call sheet downloaded');
   }
 
-  // changes where a scene sits in the day's running order (the shot list itself is untouched)
+  // the day's running order: scenes plus the fixed-time walls ('@id'), so a scene can be moved to
+  // either side of a wall. Walls that aren't in the saved order yet are placed where they fall now.
+  function fullOrder(day){
+    const groups = sceneGroups(day.date);
+    const al = allocateScenes(day, groups);
+    const startOf = n => { const it = al.items.find(x => !x.isLunch && !x.isBlock && !x.isChange && x.scene === n); return it && it.startMin !== null ? it.startMin : null; };
+    const walls = (day.times || []).filter(x => x.time && !x.end && !(dur5(x.minutes) > 0)).map(x => '@' + x.id);
+    const sceneNames = groups.map(g => g.scene);
+    const out = (day.sceneOrder || []).filter(n => sceneNames.includes(n) || walls.includes(n));
+    sceneNames.forEach(n => { if(!out.includes(n)) out.push(n); });
+    const t = dayTimings(day);
+    walls.filter(w => !out.includes(w)).forEach(w => {
+      const x = day.times.find(q => '@' + q.id === w);
+      let m = r5(schedToMin(x.time)); if(t && m < t.arrive) m += 24*60;
+      let at = out.findIndex(n => !n.startsWith('@') && startOf(n) !== null && startOf(n) >= m);
+      if(at < 0) at = out.length;
+      out.splice(at, 0, w);
+    });
+    return out;
+  }
+  // changes where a scene sits in the day's running order (the shot list itself is untouched); it can
+  // step across a fixed-time wall
   function moveScene(day, scene, dir){
-    const names = sceneGroups(day.date).map(g => g.scene);
+    const names = fullOrder(day);
     const at = names.indexOf(scene), to = at + dir;
     if(at < 0 || to < 0 || to >= names.length) return;
     names.splice(at, 1); names.splice(to, 0, scene);
@@ -8393,11 +8429,11 @@ function openScheduleModal(project, step, sideRight){
     if(L + (newMin - item.startMin) < lo){
       // earlier than the scenes before it can allow — so move this scene up the running order instead,
       // to just ahead of the first scene that starts after the time asked for
-      const names = sceneGroups(day.date).map(g => g.scene).filter(n => n !== scene);
+      const names = fullOrder(day).filter(n => n !== scene);
       const nextIdx = names.findIndex(n => { const it = alloc.items.find(x => !x.isLunch && !x.isBlock && !x.isChange && x.scene === n); return it && it.startMin >= newMin; });
       names.splice(nextIdx < 0 ? names.length : nextIdx, 0, scene);
       day.sceneOrder = names;
-      showToast(nextIdx < 0 ? 'Moved to the end of the day' : `Moved ahead of ${names[nextIdx + 1]}`);
+      showToast(nextIdx < 0 ? 'Moved to the end of the day' : `Moved ahead of ${names[nextIdx + 1].replace(/^@.*/, 'the next scene')}`);
       return;
     }
     for(let k = 0; k < 8; k++){
