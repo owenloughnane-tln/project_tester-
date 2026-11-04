@@ -966,6 +966,7 @@
 </head>
 <body>
 <div id="app"><div class="loading">Loading project log…</div></div>
+<div style="max-width:640px; margin:0 auto; padding:16px; font:10px var(--mono); color:var(--text-dim); text-align:center; opacity:.6;">build 4 Nov · 11:25</div>
 
 <script>
 // Backs window.storage with Supabase's REST API (PostgREST) instead of relying on Claude's
@@ -8230,10 +8231,10 @@ function openScheduleModal(project, step, sideRight){
       const font = '700 120px Inter, "Helvetica Neue", Arial, sans-serif';
       ctx.font = font;
       const w = Math.ceil(ctx.measureText('twolastnames').width) + 16;
-      c.width = w; c.height = 170;
+      c.width = w; c.height = 94; // tight to the letters (no descenders), so the text can match the logo's height
       ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
       ctx.fillStyle = '#111'; ctx.font = font; ctx.textBaseline = 'alphabetic';
-      ctx.fillText('twolastnames', 8, 125);
+      ctx.fillText('twolastnames', 8, 90);
       wordmark = { url: c.toDataURL('image/jpeg', 0.95), ratio: c.width / c.height };
     } catch(e){ wordmark = null; }
 
@@ -8258,7 +8259,7 @@ function openScheduleModal(project, step, sideRight){
       const lh = 20;
       drawLogo(M, y, lh);
       const lw = lh * 900 / 748;
-      if(wordmark){ const wh = 12; doc.addImage(wordmark.url, 'JPEG', M + lw + 8, y + (lh - wh) / 2 - 1, wh * wordmark.ratio, wh); }
+      if(wordmark){ const wh = lh * 0.88; doc.addImage(wordmark.url, 'JPEG', M + lw + 8, y + (lh - wh) / 2, wh * wordmark.ratio, wh); }
       else { y += 14; text('twolastnames', M + lw + 8, 12, 'bold'); y -= 14; }
       y += 9; text('CALL SHEET', PW - M, 9, 'bold', 110, { align:'right' }); y -= 9;
       y += lh + 10;
