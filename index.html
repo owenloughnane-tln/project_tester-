@@ -2797,9 +2797,10 @@ function computeShotTimeSlot(project, shot){
   const item = items.find(x => !x.isLunch && !x.isBlock && !x.isChange && x.scene === key);
   if(!item || item.startMin === null) return null;
   const sceneRows = scheduleRelevantRows(project, shot.day).filter(r => (r.scene || '(No scene set)') === key);
-  const idxInScene = sceneRows.findIndex(r => r.id === shot.id);
-  if(idxInScene === -1) return null;
-  const perShot = (item.endMin - item.startMin) / sceneRows.length;
+  const slots = sceneShotSlots(sceneRows);
+  const idxInScene = slots.slotOf[shot.id];
+  if(idxInScene === undefined) return null;
+  const perShot = (item.endMin - item.startMin) / slots.count;
   const toDate = (minutesFromMidnight) => {
     const d = new Date(shot.day + 'T00:00:00');
     d.setMinutes(d.getMinutes() + Math.round(minutesFromMidnight));
@@ -7510,6 +7511,23 @@ function dayTimings(day){
   }
   return { arrive, setupMins, debriefMins, packMins, autoPack, setupEnd, shootStart, shootEnd, leave };
 }
+// Rows of one scene that share a shot number but are on different cameras (say shot 3 on camera A and
+// camera B) are one shot being filmed by both cameras at once, so they take up the time of a single shot.
+// Returns { slotOf: row id → slot number, count } in order of first appearance.
+function sceneShotSlots(rows){
+  const slotOf = {}, seen = {}, seenCam = {};
+  let count = 0;
+  rows.forEach(r => {
+    const num = String(r.shot || '').trim().toLowerCase();
+    if(!num){ slotOf[r.id] = count++; return; }
+    const cam = String(r.camera || '').trim().toUpperCase();
+    const occ = (seenCam[num + '|' + cam] = (seenCam[num + '|' + cam] || 0) + 1);
+    const key = num + '#' + occ;
+    if(seen[key] === undefined) seen[key] = count++;
+    slotOf[r.id] = seen[key];
+  });
+  return { slotOf, count };
+}
 function scheduleRelevantRows(project, date){
   const shotStep = (project.steps || []).find(isShotListStep);
   if(!shotStep || !shotStep.shotListRows) return [];
@@ -7523,8 +7541,8 @@ function scheduleSceneGroups(project, date, day){
   const map = {};
   scheduleRelevantRows(project, date).forEach(r => {
     const key = r.scene || '(No scene set)';
-    if(!map[key]) map[key] = { count:0, cameras: new Set(), firstOrder: Infinity, seq: Object.keys(map).length };
-    map[key].count++;
+    if(!map[key]) map[key] = { count:0, rows:[], cameras: new Set(), firstOrder: Infinity, seq: Object.keys(map).length };
+    map[key].rows.push(r);
     // scenes run in shooting order: a scene sits where its earliest-ordered shot sits
     const ord = parseFloat(r.order);
     if(!isNaN(ord) && ord < map[key].firstOrder) map[key].firstOrder = ord;
@@ -7532,6 +7550,7 @@ function scheduleSceneGroups(project, date, day){
     // "A&B" (or shots split across both cameras) means both shooters are covering it
     (r.camera || '').split(/[,&/]|\band\b/i).map(c => c.trim().toUpperCase()).filter(Boolean).forEach(c => map[key].cameras.add(c));
   });
+  Object.values(map).forEach(g => { g.count = sceneShotSlots(g.rows).count; });
   const ordered = Object.entries(map)
     .sort((a, b) => (a[1].firstOrder - b[1].firstOrder) || (a[1].seq - b[1].seq) || 0)
     .map(([scene,data]) => ({
@@ -8004,7 +8023,7 @@ function openScheduleModal(project, step, sideRight){
           </div>` : ''}
           <label class="loc-label">Length (mins)</label>
           <div style="display:flex; gap:8px; align-items:center;">
-            <input type="number" inputmode="numeric" min="5" step="5" data-scenemin="${esc(key)}" value="${g.custom ? esc(String(g.minutes)) : ''}" placeholder="${suggested !== null ? suggested : ''}" style="flex:1;">
+            <input type="number" inputmode="numeric" min="5" step="5" data-scenemin="${esc(key)}" value="${g.custom ? esc(String((day.sceneMinutes || {})[g.scene] ?? g.minutes)) : ''}" placeholder="${suggested !== null ? suggested : ''}" style="flex:1;">
             ${g.custom ? `<button type="button" class="btn small" data-scenereset="${esc(key)}">Use suggested</button>` : ''}
           </div>
           <div style="display:flex; gap:8px; margin-top:8px;">
@@ -8256,7 +8275,7 @@ function openScheduleModal(project, step, sideRight){
       doc.setLineWidth(0.5);
     }
     function header(){
-      const lh = 20;
+      const lh = 14;
       drawLogo(M, y, lh);
       const lw = lh * 900 / 748;
       if(wordmark){ const wh = lh * 0.88; doc.addImage(wordmark.url, 'JPEG', M + lw + 8, y + (lh - wh) / 2, wh * wordmark.ratio, wh); }
