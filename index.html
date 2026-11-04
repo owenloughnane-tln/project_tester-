@@ -7622,9 +7622,18 @@ function allocateScenes(day, groups){
   blocks.forEach(b => { if(b.s < cur) b.s = cur; if(b.s < ws) b.s = ws; if(b.e > we) b.e = we; if(b.e < b.s) b.e = b.s; cur = Math.max(cur, b.e); });
   blocks = blocks.filter(b => b.e > b.s);
   const segs = [];
+  // blocks hold time free; a fixed time with no length is a wall — scenes before it stop there and
+  // scenes after it start there (nothing runs across it)
+  const cuts = blocks.map(b => ({ s:b.s, e:b.e, kind:'block' }))
+    .concat(points.filter(p => p.at > ws && p.at < we).map(p => ({ s:p.at, e:p.at, kind:'point' })))
+    .sort((a, b) => (a.s - b.s) || (a.kind === 'point' ? -1 : 1));
   cur = ws;
-  blocks.forEach(b => { if(b.s > cur) segs.push({ s:cur, e:b.s, units:[] }); cur = Math.max(cur, b.e); });
-  if(cur < we) segs.push({ s:cur, e:we, units:[] });
+  let prevKind = null;
+  cuts.forEach(c => {
+    if(c.s > cur){ segs.push({ s:cur, e:c.s, units:[], before:prevKind, after:c.kind }); prevKind = c.kind; cur = Math.max(cur, c.e); }
+    else if(c.kind === 'block'){ prevKind = 'block'; cur = Math.max(cur, c.e); }
+  });
+  if(cur < we) segs.push({ s:cur, e:we, units:[], before:prevKind, after:null });
   const workTicks = segs.reduce((s, x) => s + (x.e - x.s), 0);
 
   // each unit's own numbers: time that is already decided (custom minutes + changes), the shot
@@ -7681,12 +7690,20 @@ function allocateScenes(day, groups){
   // at the start, the one after) — that scene simply runs on past the block in between
   const groups2 = [];
   let carry = [];
-  segs.forEach(seg => {
-    if(seg.units.length){ groups2.push({ pieces: carry.concat([seg]), units: seg.units }); carry = []; }
-    else if(groups2.length) groups2[groups2.length - 1].pieces.push(seg);
-    else carry.push(seg);
+  const freeRow = seg => entries.push({ kind:'free', label:'Free time', startMin:seg.s * T, endMin:seg.e * T, range: clk(seg.s, seg.e), sortAt:seg.s, order:0 });
+  segs.forEach((seg, k) => {
+    if(seg.units.length){
+      // an empty stretch just before is worked through by this group only if a block (not a fixed-time wall) sits between
+      if(carry.length && !(carry[carry.length - 1] === segs[k - 1] && carry[carry.length - 1].after === 'block')){ carry.forEach(freeRow); carry = []; }
+      groups2.push({ pieces: carry.concat([seg]), units: seg.units, last: seg }); carry = [];
+    } else {
+      const lastG = groups2[groups2.length - 1];
+      if(lastG && lastG.last === segs[k - 1] && seg.before === 'block'){ lastG.pieces.push(seg); lastG.last = seg; }
+      else if(seg.after === 'block' && k < segs.length - 1 && (!carry.length || carry[carry.length - 1] === segs[k - 1])) carry.push(seg);
+      else freeRow(seg);
+    }
   });
-  if(!groups2.length) segs.forEach(seg => entries.push({ kind:'free', label:'Free time', startMin:seg.s * T, endMin:seg.e * T, range: clk(seg.s, seg.e), sortAt:seg.s, order:0 }));
+  carry.forEach(freeRow);
   groups2.forEach(grp => {
     const len = grp.pieces.reduce((n, p) => n + (p.e - p.s), 0);
     const segUnits = grp.units;
