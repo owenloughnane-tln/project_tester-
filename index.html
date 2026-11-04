@@ -6823,10 +6823,13 @@ function openShotListModal(project, step, sideRight){
     if(key === 'location'){
       const addr = findAddress(r.day, r.scene);
       const locationValue = r.location !== undefined && r.location !== '' ? r.location : (addr || '');
-      const locationHint = addr === null && r.day && r.scene ? `<div class="sl-hint">No Location Scout entry yet — add one there.</div>` : '';
+      const locationHint = '';
       // every address saved in Location scout, across all days — plus whatever this row already holds
       const addrList = [];
-      ((locStep && locStep.locationRows) || []).forEach(lr => (lr.entries || []).forEach(en => {
+      // read Location scout fresh each time, so a location added there shows up straight away
+      const liveProject = (typeof byId === 'function' && byId(project.id)) || project;
+      const liveLoc = (liveProject.steps || []).find(isLocationStep) || locStep;
+      ((liveLoc && liveLoc.locationRows) || []).forEach(lr => (lr.entries || []).forEach(en => {
         const a = (en.address || '').trim();
         if(a && !addrList.includes(a)) addrList.push(a);
       }));
@@ -7009,6 +7012,39 @@ function openShotListModal(project, step, sideRight){
   paint();
 }
 
+// Panels repaint themselves by rebuilding their HTML (often on every keystroke). Wrap that so the
+// scroll position (vertical and sideways), the focused box and the cursor survive the repaint —
+// typing in any panel no longer jumps to the top.
+(function(){
+  const desc = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML');
+  Object.defineProperty(Element.prototype, 'innerHTML', {
+    configurable: true,
+    get(){ return desc.get.call(this); },
+    set(v){
+      const root = this;
+      if(!root.classList || !root.classList.contains('modal-bg') || !root.firstElementChild) return desc.set.call(root, v);
+      const pathOf = el => { const p = []; while(el !== root){ const par = el.parentElement; p.unshift(Array.prototype.indexOf.call(par.children, el)); el = par; } return p; };
+      const saved = [];
+      [root].concat([...root.querySelectorAll('*')]).forEach(el => { if(el.scrollTop || el.scrollLeft) saved.push({ p: el === root ? [] : pathOf(el), t: el.scrollTop, l: el.scrollLeft }); });
+      const ae = document.activeElement;
+      let focus = null;
+      if(ae && ae !== root && root.contains(ae) && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName) && ae.type !== 'file'){
+        let s = null, e = null; try{ s = ae.selectionStart; e = ae.selectionEnd; }catch(err){}
+        focus = { p: pathOf(ae), s, e, tag: ae.tagName };
+      }
+      desc.set.call(root, v);
+      const at = p => { let el = root; for(const i of p){ el = el && el.children[i]; } return el; };
+      saved.forEach(x => { const el = at(x.p); if(el){ el.scrollTop = x.t; el.scrollLeft = x.l; } });
+      if(focus){
+        const el = at(focus.p);
+        if(el && el.tagName === focus.tag){
+          el.focus({ preventScroll:true });
+          if(focus.s !== null){ try{ el.setSelectionRange(focus.s, focus.e); }catch(err){} }
+        }
+      }
+    }
+  });
+})();
 function minutesToClock(mins){
   mins = ((mins % (24*60)) + 24*60) % (24*60);
   const h = Math.floor(mins/60), m = mins%60;
@@ -8308,10 +8344,13 @@ function openScheduleModal(project, step, sideRight){
         if(pos < 0) continue;
         found = true;
         if(pos > 0) pred = list[pos - 1];
-        else if(ei === 0) pred = { debrief:true };
         else {
-          const prev = tl[ei - 1];
-          if(prev.kind === 'unit'){
+          // a fixed-time marker doesn't take up time, so look past it to what really comes before
+          let pi = ei - 1;
+          while(pi >= 0 && tl[pi].kind === 'point') pi--;
+          const prev = pi >= 0 ? tl[pi] : null;
+          if(!prev) pred = { debrief:true };
+          else if(prev.kind === 'unit'){
             const lasts = Object.values(prev.lanes).map(l => l[l.length - 1]).filter(Boolean);
             pred = lasts.sort((a, b) => (b.endMin || 0) - (a.endMin || 0))[0] || null;
           }
