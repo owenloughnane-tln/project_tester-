@@ -197,14 +197,28 @@
   .sched-seg-lunch{background:repeating-linear-gradient(45deg, var(--yellow), var(--yellow) 4px, var(--panel) 4px, var(--panel) 8px) !important;}
   .sched-list{display:flex; flex-direction:column; gap:6px;}
   .sched-item-wrap{display:flex; flex-direction:column;}
+  .clk-head{display:flex; align-items:center; justify-content:center; gap:4px; margin-bottom:12px;}
+  .clk-digit{font-family:var(--mono); font-size:40px; font-weight:600; background:var(--panel-2); color:var(--text-dim); border:none; border-radius:10px; padding:6px 14px; cursor:pointer;}
+  .clk-digit.on{background:var(--btn-bg); color:var(--btn-fg);}
+  .clk-colon{font-size:36px; font-weight:600; color:var(--text);}
+  .clk-ampm{display:flex; flex-direction:column; gap:4px; margin-left:10px;}
+  .clk-ampm button{font-family:var(--mono); font-size:12px; font-weight:600; border:1px solid var(--line); background:none; color:var(--text-dim); border-radius:6px; padding:6px 10px; cursor:pointer;}
+  .clk-ampm button.on{background:var(--btn-bg); color:var(--btn-fg); border-color:var(--btn-bg);}
+  .clk-dial{width:100%; max-width:260px; display:block; margin:0 auto 14px; touch-action:none; color:var(--text); user-select:none;}
+  .clk-face{fill:var(--panel-2);}
+  .clk-hand{stroke:var(--btn-bg); stroke-width:2;}
+  .clk-pin{fill:var(--btn-bg);}
+  .clk-sel{fill:var(--btn-bg);}
   .sched-loc{font-family:var(--mono); font-size:10.5px; color:var(--text-dim); font-weight:400; margin-top:2px; word-break:break-word;}
   .sched-fixed{border-left:3px solid var(--amber);}
-  .sched-fixed-row{display:grid; grid-template-columns:1fr 128px 62px 28px; gap:6px; align-items:center; margin-top:6px;}
+  .sched-fixed-row{display:grid; grid-template-columns:1fr 1fr 28px; gap:6px; align-items:end; margin-top:8px;}
+  .sched-fixed-row > .sl-input{grid-column:1 / 3;}
   .sched-par{display:grid; grid-template-columns:1fr 1fr; gap:8px; align-items:start;}
   .sched-lane{min-width:0; display:flex; flex-direction:column; gap:6px; border-left:2px solid var(--line); padding-left:6px;}
   .sched-lane-head{font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-dim);}
   .sched-person{margin:6px 0 10px;}
-  .sched-when{display:grid; grid-template-columns:128px 1fr; gap:6px; margin-top:4px;}
+  .sched-when{display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:4px;}
+  .sched-when > .sl-input{grid-column:1 / 3;}
   .sched-item{display:flex; align-items:baseline; justify-content:space-between; gap:8px; background:var(--bg); border:1px solid var(--line); border-radius:6px; padding:7px 10px;}
   .sched-item.sched-clickable{cursor:pointer;}
   .sched-item.sched-clickable:hover, .sched-item.sched-open{border-color:var(--text);}
@@ -7021,39 +7035,53 @@ function timeFieldHtml(id, value){
       <input type="hidden" id="${id}" value="${esc(value||'')}">
     </div>`;
 }
-// hour and minute spinner (minutes step in 5s; the minute box takes anything more specific)
+// Android-style clock picker: tap the hour on the dial, it jumps to the minutes (5-minute steps),
+// tap AM / PM, Done. Drag round the dial works too. Same contract as before: writes the hidden
+// input and fires its 'change' event.
 function openTimePicker(triggerEl){
   const hidden = document.getElementById(triggerEl.dataset.timefield);
   const initial = hidden.value || '';
-  const [ih, im] = initial ? initial.split(':').map(Number) : [null, null];
-  let h = ih, m = im;
+  let h24, m;
+  if(initial){ [h24, m] = initial.split(':').map(Number); }
+  else { const now = new Date(); h24 = now.getHours(); m = Math.round(now.getMinutes() / 5) * 5 % 60; }
+  let mode = 'hour';
   const bg = document.createElement('div');
   bg.className = 'modal-bg picker-overlay';
+  const R = 100, C = 124;
+  const pos = (i, r) => { const a = i * Math.PI / 6; return [C + r * Math.sin(a), C - r * Math.cos(a)]; };
 
   function render(){
-    const hDisp = h===null ? '' : String(h).padStart(2,'0');
-    const mDisp = m===null ? '' : String(m).padStart(2,'0');
+    const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+    const pm = h24 >= 12;
+    const selIdx = mode === 'hour' ? h12 % 12 : Math.round(m / 5) % 12;
+    const [sx, sy] = pos(selIdx, R);
+    const exact = mode === 'minute' && m % 5 !== 0;
+    const labels = Array.from({ length: 12 }, (_, i) => {
+      const [x, y] = pos(i, R);
+      const txt = mode === 'hour' ? (i === 0 ? 12 : i) : String(i * 5).padStart(2, '0');
+      const on = i === selIdx && !exact;
+      return `<text x="${x}" y="${y + 5}" text-anchor="middle" font-size="15" font-family="var(--mono)" fill="${on ? '#fff' : 'currentColor'}" pointer-events="none">${txt}</text>`;
+    }).join('');
     bg.innerHTML = `
       <div class="modal time-picker-modal">
-        <h3>Select time</h3>
-        <div class="time-spinner">
-          <div class="time-spin-col">
-            <button type="button" class="time-spin-btn" id="tpHourUp" aria-label="Hour up">▲</button>
-            <input type="text" inputmode="numeric" maxlength="2" class="time-spin-digit" id="tpHourInput" value="${hDisp}" placeholder="--">
-            <button type="button" class="time-spin-btn" id="tpHourDown" aria-label="Hour down">▼</button>
-          </div>
-          <div class="time-spin-colon">:</div>
-          <div class="time-spin-col">
-            <button type="button" class="time-spin-btn" id="tpMinUp" aria-label="Minute up">▲</button>
-            <input type="text" inputmode="numeric" maxlength="2" class="time-spin-digit" id="tpMinInput" value="${mDisp}" placeholder="--">
-            <button type="button" class="time-spin-btn" id="tpMinDown" aria-label="Minute down">▼</button>
+        <div class="clk-head">
+          <button type="button" class="clk-digit${mode === 'hour' ? ' on' : ''}" id="clkH">${String(h12).padStart(2, '0')}</button>
+          <span class="clk-colon">:</span>
+          <button type="button" class="clk-digit${mode === 'minute' ? ' on' : ''}" id="clkM">${String(m).padStart(2, '0')}</button>
+          <div class="clk-ampm">
+            <button type="button" class="${!pm ? 'on' : ''}" id="clkAM">AM</button>
+            <button type="button" class="${pm ? 'on' : ''}" id="clkPM">PM</button>
           </div>
         </div>
-        <div class="time-spin-actions">
-          <button type="button" class="btn small" id="tpNow">Now</button>
-          <button type="button" class="btn small ghost" id="tpClear">Clear</button>
-        </div>
+        <svg id="clkDial" viewBox="0 0 248 248" class="clk-dial">
+          <circle cx="${C}" cy="${C}" r="120" class="clk-face"/>
+          <line x1="${C}" y1="${C}" x2="${sx}" y2="${sy}" class="clk-hand"/>
+          <circle cx="${C}" cy="${C}" r="4" class="clk-pin"/>
+          <circle cx="${sx}" cy="${sy}" r="21" class="clk-sel"/>
+          ${labels}
+        </svg>
         <div class="modal-actions">
+          <button class="btn ghost" id="tpClear" style="flex:0 0 auto;">Clear</button>
           <button class="btn ghost" id="tpCancel" style="flex:1;">Cancel</button>
           <button class="btn primary" id="tpDone" style="flex:1;">Done</button>
         </div>
@@ -7062,38 +7090,44 @@ function openTimePicker(triggerEl){
   }
 
   function wire(){
-    const hInput = bg.querySelector('#tpHourInput');
-    const mInput = bg.querySelector('#tpMinInput');
-    hInput.addEventListener('input', () => {
-      const v = hInput.value.replace(/\D/g,'').slice(0,2);
-      hInput.value = v;
-      const n = parseInt(v,10);
-      h = isNaN(n) ? null : Math.min(23, n);
+    const set24 = (h12, pm) => { h24 = (h12 % 12) + (pm ? 12 : 0); };
+    bg.querySelector('#clkH').addEventListener('click', () => { mode = 'hour'; render(); });
+    bg.querySelector('#clkM').addEventListener('click', () => { mode = 'minute'; render(); });
+    bg.querySelector('#clkAM').addEventListener('click', () => { h24 = h24 % 12; render(); });
+    bg.querySelector('#clkPM').addEventListener('click', () => { h24 = (h24 % 12) + 12; render(); });
+    const dial = bg.querySelector('#clkDial');
+    let dragging = false;
+    function pick(ev){
+      const r = dial.getBoundingClientRect();
+      const dx = ev.clientX - (r.left + r.width / 2), dy = ev.clientY - (r.top + r.height / 2);
+      let a = Math.atan2(dx, -dy) * 180 / Math.PI; if(a < 0) a += 360;
+      const idx = Math.round(a / 30) % 12;
+      if(mode === 'hour') set24(idx === 0 ? 12 : idx, h24 >= 12);
+      else m = idx * 5;
+      const [sx, sy] = pos(idx, R);
+      // move the hand and highlight without rebuilding the SVG, so dragging stays smooth
+      dial.querySelector('.clk-hand').setAttribute('x2', sx); dial.querySelector('.clk-hand').setAttribute('y2', sy);
+      dial.querySelector('.clk-sel').setAttribute('cx', sx); dial.querySelector('.clk-sel').setAttribute('cy', sy);
+      dial.querySelectorAll('text').forEach((t, i) => t.setAttribute('fill', i === idx ? '#fff' : 'currentColor'));
+      bg.querySelector(mode === 'hour' ? '#clkH' : '#clkM').textContent = mode === 'hour' ? String(h24 % 12 === 0 ? 12 : h24 % 12).padStart(2, '0') : String(m).padStart(2, '0');
+    }
+    dial.addEventListener('pointerdown', ev => { dragging = true; dial.setPointerCapture(ev.pointerId); pick(ev); });
+    dial.addEventListener('pointermove', ev => { if(dragging) pick(ev); });
+    dial.addEventListener('pointerup', ev => {
+      if(!dragging) return; dragging = false;
+      if(mode === 'hour'){ mode = 'minute'; render(); }
     });
-    hInput.addEventListener('blur', () => render());
-    mInput.addEventListener('input', () => {
-      const v = mInput.value.replace(/\D/g,'').slice(0,2);
-      mInput.value = v;
-      const n = parseInt(v,10);
-      m = isNaN(n) ? null : Math.min(59, n);
+    bg.querySelector('#tpClear').addEventListener('click', () => {
+      hidden.value = '';
+      triggerEl.querySelector('.dfield-text').textContent = 'Select time';
+      hidden.dispatchEvent(new Event('change', { bubbles:true }));
+      bg.remove();
     });
-    mInput.addEventListener('blur', () => render());
-    bg.querySelector('#tpHourUp').addEventListener('click', () => { h = ((h===null?-1:h)+1+24)%24; render(); });
-    bg.querySelector('#tpHourDown').addEventListener('click', () => { h = ((h===null?1:h)+23)%24; render(); });
-    bg.querySelector('#tpMinUp').addEventListener('click', () => { m = ((m===null?-5:m)+5+60)%60; render(); });
-    bg.querySelector('#tpMinDown').addEventListener('click', () => { m = ((m===null?5:m)+55)%60; render(); });
-    bg.querySelector('#tpNow').addEventListener('click', () => {
-      const now = new Date();
-      h = now.getHours();
-      m = Math.round(now.getMinutes()/5)*5 % 60; if(now.getMinutes() >= 58) h = (h + 1) % 24;
-      render();
-    });
-    bg.querySelector('#tpClear').addEventListener('click', () => { h = null; m = null; render(); });
     bg.querySelector('#tpCancel').addEventListener('click', () => bg.remove());
     bg.querySelector('#tpDone').addEventListener('click', () => {
-      const finalVal = (h===null || m===null) ? '' : `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+      const finalVal = `${String(h24).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
       hidden.value = finalVal;
-      triggerEl.querySelector('.dfield-text').textContent = finalVal ? formatClockValue(finalVal) : 'Select time';
+      triggerEl.querySelector('.dfield-text').textContent = formatClockValue(finalVal);
       hidden.dispatchEvent(new Event('change', { bubbles:true }));
       bg.remove();
     });
@@ -7536,7 +7570,8 @@ function allocateScenes(day, groups){
   }
   (day.times || []).forEach(x => {
     if(!x.time) return;
-    const d = dur5(x.minutes);
+    let d = dur5(x.minutes);
+    if(x.end){ let e = r5(schedToMin(x.end)) - r5(schedToMin(x.time)); if(e <= 0) e += 24*60; d = dur5(e); }
     if(d > 0) blocks.push({ kind:'block', id:x.id, label:x.label || 'Fixed time', s: place(x.time), d: tk(d) });
     else points.push({ id:x.id, label:x.label || 'Fixed time', at: place(x.time) });
   });
@@ -7843,12 +7878,12 @@ function openScheduleModal(project, step, sideRight){
         ${(day.times || []).map((x, k) => `
           <div class="sched-fixed-row">
             <input type="text" class="sl-input" data-fxfield="label" data-idx="${i}" data-k="${k}" value="${esc(x.label || '')}" placeholder="e.g. Golden hour">
-            ${timeFieldHtml('schedtime-fx-' + i + '-' + k, x.time)}
-            <input type="number" inputmode="numeric" min="0" step="5" class="sl-input sched-fx-min" data-fxfield="minutes" data-idx="${i}" data-k="${k}" value="${esc(x.minutes || '')}" placeholder="mins">
             <button type="button" class="mo-btn" data-fxremove="${k}" data-idx="${i}" aria-label="Remove time">&times;</button>
+            <div class="budget-op-field"><label>Start</label>${timeFieldHtml('schedtime-fx-' + i + '-' + k, x.time)}</div>
+            <div class="budget-op-field"><label>End</label>${timeFieldHtml('schedtime-fxend-' + i + '-' + k, x.end)}</div>
           </div>`).join('')}
         <button type="button" class="btn small" data-addtime="${i}" style="width:100%; margin-top:6px;">+ Add time</button>
-        ${(day.times || []).length ? `<div class="timeline-hint" style="margin:4px 0 0;">With minutes, a fixed time is held free and scenes work around it. Without, it's just a marker.</div>` : ''}`;
+        ${(day.times || []).length ? `<div class="timeline-hint" style="margin:4px 0 0;">With an end time, that stretch is held free and scenes work around it. Without one, it's just a marker.</div>` : ''}`;
   }
   // two cameras: shoot at the same time in different places (A and B lanes), or one after another
   function parallelHtml(day, i){
@@ -8057,6 +8092,7 @@ function openScheduleModal(project, step, sideRight){
     const whenWhere = (kind, ref, v) => `
       <div class="sched-when">
         ${timeFieldHtml('schedtime-' + kind + '-' + i + '-' + ref, (v && v.time) || '')}
+        ${timeFieldHtml('schedtime-' + kind + 'end-' + i + '-' + ref, (v && v.end) || '')}
         <input type="text" class="sl-input" list="${dl}" data-${kind}loc="${esc(String(ref))}" data-idx="${i}" value="${esc((v && v.location) || '')}" placeholder="Where on set">
       </div>`;
     return `
@@ -8066,7 +8102,7 @@ function openScheduleModal(project, step, sideRight){
         ${onSet.length ? '' : `<div class="sched-cc-line"><b>Crew:</b> No operators from Budget assigned to this date yet.</div>`}
         ${onSet.map((o, ci) => `
           <div class="sched-person">
-            <div class="sched-cc-line"><b>${esc(o.role)}</b>${o.task ? ' — ' + esc(o.task) : ''}</div>
+            <div class="sched-cc-line"><b>${esc(o.role)}</b></div>
             ${whenWhere('crew', ci, (day.crewTimes || {})[o.role])}
           </div>`).join('')}
         ${(others || []).map((o, oi) => `
@@ -8139,13 +8175,13 @@ function openScheduleModal(project, step, sideRight){
       doc.setLineWidth(0.5);
     }
     function header(){
-      const lh = 30;
+      const lh = 20;
       drawLogo(M, y, lh);
       const lw = lh * 900 / 748;
-      if(wordmark){ const wh = 17; doc.addImage(wordmark.url, 'JPEG', M + lw + 8, y + (lh - wh) / 2 - 1, wh * wordmark.ratio, wh); }
-      else { y += 20; text('twolastnames', M + lw + 8, 16, 'bold'); y -= 20; }
-      y += 12; text('CALL SHEET', PW - M, 9, 'bold', 110, { align:'right' }); y -= 12;
-      y += lh + 12;
+      if(wordmark){ const wh = 12; doc.addImage(wordmark.url, 'JPEG', M + lw + 8, y + (lh - wh) / 2 - 1, wh * wordmark.ratio, wh); }
+      else { y += 14; text('twolastnames', M + lw + 8, 12, 'bold'); y -= 14; }
+      y += 9; text('CALL SHEET', PW - M, 9, 'bold', 110, { align:'right' }); y -= 9;
+      y += lh + 10;
       doc.setDrawColor(190); doc.line(M, y, PW - M, y); y += 24;
     }
 
@@ -8174,12 +8210,12 @@ function openScheduleModal(project, step, sideRight){
       // who and when
       const crew = operatorsForDay(day.date).map(o => {
         const v = (day.crewTimes || {})[o.role] || {};
-        return [o.role + (o.task ? ` — ${o.task}` : ''), v.time ? formatClockValue(v.time) : m.arriveLocation, v.location || locs[0] || ''];
+        return [o.role, `${v.time ? formatClockValue(v.time) : m.arriveLocation} – ${v.end ? formatClockValue(v.end) : (m.end ? m.end.leaveClock : '')}`, v.location || locs[0] || ''];
       });
-      const others = (day.others || []).filter(o => (o.text || '').trim()).map(o => [o.text.trim(), o.time ? formatClockValue(o.time) : '', o.location || '']);
+      const others = (day.others || []).filter(o => (o.text || '').trim()).map(o => [o.text.trim(), o.time || o.end ? `${o.time ? formatClockValue(o.time) : ''} – ${o.end ? formatClockValue(o.end) : ''}` : '', o.location || '']);
       const people = crew.concat(others);
-      const cols = [M, M + 250, M + 340];
-      const colW = [240, 80, PW - M - (M + 340)];
+      const cols = [M, M + 215, M + 345];
+      const colW = [205, 125, PW - M - (M + 345)];
       const table = (head, rows, widths, xs, rowPad) => {
         need(30);
         doc.setFillColor(238, 238, 238); doc.rect(M - 6, y - 12, PW - 2 * M + 12, 20, 'F');
@@ -8196,7 +8232,7 @@ function openScheduleModal(project, step, sideRight){
       };
       if(people.length){
         text('WHO IS NEEDED, WHEN AND WHERE', M, 8.5, 'bold', 120); y += 14;
-        table(['NAME', 'ON SET', 'WHERE'], people, colW, cols, 8);
+        table(['NAME', 'ON SET (FROM – TO)', 'WHERE'], people, colW, cols, 8);
         y += 14;
       }
 
@@ -8374,6 +8410,14 @@ function openScheduleModal(project, step, sideRight){
           days[parseInt(m[2],10)][{ start:'start', end:'end', lunchstart:'lunchStart' }[m[1]]] = val ? minutesToHHMM(r5(schedToMin(val))) : '';
         } else if((m = id.match(/^schedtime-fx-(\d+)-(\d+)$/))){
           days[parseInt(m[1],10)].times[parseInt(m[2],10)].time = val ? minutesToHHMM(r5(schedToMin(val))) : '';
+        } else if((m = id.match(/^schedtime-fxend-(\d+)-(\d+)$/))){
+          days[parseInt(m[1],10)].times[parseInt(m[2],10)].end = val ? minutesToHHMM(r5(schedToMin(val))) : '';
+        } else if((m = id.match(/^schedtime-othend-(\d+)-(\d+)$/))){
+          days[parseInt(m[1],10)].others[parseInt(m[2],10)].end = val ? minutesToHHMM(r5(schedToMin(val))) : '';
+        } else if((m = id.match(/^schedtime-crewend-(\d+)-(\d+)$/))){
+          const d = days[parseInt(m[1],10)];
+          const role = operatorsForDay(d.date)[parseInt(m[2],10)].role;
+          d.crewTimes[role] = Object.assign(d.crewTimes[role] || {}, { end: val ? minutesToHHMM(r5(schedToMin(val))) : '' });
         } else if((m = id.match(/^schedtime-oth-(\d+)-(\d+)$/))){
           days[parseInt(m[1],10)].others[parseInt(m[2],10)].time = val ? minutesToHHMM(r5(schedToMin(val))) : '';
         } else if((m = id.match(/^schedtime-crew-(\d+)-(\d+)$/))){
