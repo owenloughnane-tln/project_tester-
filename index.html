@@ -2792,7 +2792,7 @@ function computeShotTimeSlot(project, shot){
   if(!dayData || !dayData.start || !dayData.end) return null;
   migrateScheduleDay(dayData);
   const key = shot.scene || '(No scene set)';
-  const { items } = allocateScenes(dayData, scheduleSceneGroups(project, shot.day));
+  const { items } = allocateScenes(dayData, scheduleSceneGroups(project, shot.day, dayData));
   const item = items.find(x => !x.isLunch && !x.isBlock && !x.isChange && x.scene === key);
   if(!item || item.startMin === null) return null;
   const sceneRows = scheduleRelevantRows(project, shot.day).filter(r => (r.scene || '(No scene set)') === key);
@@ -7507,7 +7507,7 @@ function scheduleRelevantRows(project, date){
   // need shots actually matched to a specific date.
   return getShootDates(project).length <= 1 ? shotStep.shotListRows : shotStep.shotListRows.filter(r => r.day === date);
 }
-function scheduleSceneGroups(project, date){
+function scheduleSceneGroups(project, date, day){
   const map = {};
   scheduleRelevantRows(project, date).forEach(r => {
     const key = r.scene || '(No scene set)';
@@ -7520,12 +7520,17 @@ function scheduleSceneGroups(project, date){
     // "A&B" (or shots split across both cameras) means both shooters are covering it
     (r.camera || '').split(/[,&/]|\band\b/i).map(c => c.trim().toUpperCase()).filter(Boolean).forEach(c => map[key].cameras.add(c));
   });
-  return Object.entries(map)
+  const ordered = Object.entries(map)
     .sort((a, b) => (a[1].firstOrder - b[1].firstOrder) || (a[1].seq - b[1].seq) || 0)
     .map(([scene,data]) => ({
     scene, count: data.count,
     shooter: data.cameras.size > 1 ? 'Both' : (data.cameras.size === 1 ? [...data.cameras][0] : ''),
   }));
+  // a hand-set running order for the day (Move earlier / later in the schedule) wins over the shot list's
+  const pref = (day && day.sceneOrder) || [];
+  if(!pref.length) return ordered;
+  const listed = pref.map(n => ordered.find(g => g.scene === n)).filter(Boolean);
+  return listed.concat(ordered.filter(g => !pref.includes(g.scene)));
 }
 // lays the day out between the end of debrief and the start of pack down.
 //  - scenes run in shooting order; when the two shooters split the scenes (A-only / B-only) they work
@@ -7754,7 +7759,7 @@ function openScheduleModal(project, step, sideRight){
   const savedByDate = {};
   (step.scheduleDays || []).forEach(d => { if(d.date){ migrateScheduleDay(d); savedByDate[d.date] = d; } });
   const days = shootDates.length
-    ? shootDates.map(d => Object.assign({ date:d, start:'', end:'', driveMinutes:'', uber:false, lunch:false, lunchStart:'', lunchMinutes:'60', others:[], times:[], crewTimes:{}, sceneShooter:{}, setupMinutes:'45', debriefMinutes:'15', packMinutes:'', sceneMinutes:{}, setupChanges:{}, v2:true }, savedByDate[d] || {}))
+    ? shootDates.map(d => Object.assign({ date:d, start:'', end:'', driveMinutes:'', uber:false, lunch:false, lunchStart:'', lunchMinutes:'60', others:[], times:[], crewTimes:{}, sceneShooter:{}, sceneOrder:[], setupMinutes:'45', debriefMinutes:'15', packMinutes:'', sceneMinutes:{}, setupChanges:{}, v2:true }, savedByDate[d] || {}))
     : (step.scheduleDays && step.scheduleDays.length ? JSON.parse(JSON.stringify(step.scheduleDays)) : []);
   days.forEach(d => {
     migrateScheduleDay(d);
@@ -7762,6 +7767,7 @@ function openScheduleModal(project, step, sideRight){
     if(!d.times) d.times = [];
     if(!d.crewTimes) d.crewTimes = {};
     if(!d.sceneShooter) d.sceneShooter = {};
+    if(!d.sceneOrder) d.sceneOrder = [];
     if(d.setupMinutes === undefined) d.setupMinutes = '45';
     if(d.debriefMinutes === undefined) d.debriefMinutes = '15';
     if(d.packMinutes === undefined) d.packMinutes = '';
@@ -7824,7 +7830,7 @@ function openScheduleModal(project, step, sideRight){
       <div class="sched-item"><div class="sched-item-scene">Leave location</div><div class="sched-item-meta">${esc(morning.end.leaveClock)}</div></div>`;
   }
 
-  const sceneGroups = (date) => scheduleSceneGroups(project, date);
+  const sceneGroups = (date) => scheduleSceneGroups(project, date, days.find(d => d.date === date));
   const sceneKey = (i, scene) => i + '::' + encodeURIComponent(scene);
   function parseSceneKey(key){
     const sep = key.indexOf('::');
@@ -7964,6 +7970,10 @@ function openScheduleModal(project, step, sideRight){
           <div style="display:flex; gap:8px; align-items:center;">
             <input type="number" inputmode="numeric" min="5" step="5" data-scenemin="${esc(key)}" value="${g.custom ? esc(String(g.minutes)) : ''}" placeholder="${suggested !== null ? suggested : ''}" style="flex:1;">
             ${g.custom ? `<button type="button" class="btn small" data-scenereset="${esc(key)}">Use suggested</button>` : ''}
+          </div>
+          <div style="display:flex; gap:8px; margin-top:8px;">
+            <button type="button" class="btn small" data-movescene="${esc(key)}" data-dir="-1" style="flex:1;">▲ Move earlier</button>
+            <button type="button" class="btn small" data-movescene="${esc(key)}" data-dir="1" style="flex:1;">▼ Move later</button>
           </div>
           <label class="loc-label">Camera</label>
           <select class="sl-input" data-shooter="${esc(key)}" style="width:100%;">
@@ -8307,6 +8317,14 @@ function openScheduleModal(project, step, sideRight){
     showToast('Call sheet downloaded');
   }
 
+  // changes where a scene sits in the day's running order (the shot list itself is untouched)
+  function moveScene(day, scene, dir){
+    const names = sceneGroups(day.date).map(g => g.scene);
+    const at = names.indexOf(scene), to = at + dir;
+    if(at < 0 || to < 0 || to >= names.length) return;
+    names.splice(at, 1); names.splice(to, 0, scene);
+    day.sceneOrder = names;
+  }
   // a period's End sets its own length; its Start moves the end of whatever came before it. The other
   // scenes share what's left, so the day is re-laid a few times until the time asked for is the time shown.
   function editPeriodTime(which, { dayIdx, scene }, newMin){
@@ -8363,6 +8381,16 @@ function openScheduleModal(project, step, sideRight){
     const isChg = !!pred.isChange;
     let L = pred.minutes;
     const lo = isChg ? 0 : 5;
+    if(L + (newMin - item.startMin) < lo){
+      // earlier than the scenes before it can allow — so move this scene up the running order instead,
+      // to just ahead of the first scene that starts after the time asked for
+      const names = sceneGroups(day.date).map(g => g.scene).filter(n => n !== scene);
+      const nextIdx = names.findIndex(n => { const it = alloc.items.find(x => !x.isLunch && !x.isBlock && !x.isChange && x.scene === n); return it && it.startMin >= newMin; });
+      names.splice(nextIdx < 0 ? names.length : nextIdx, 0, scene);
+      day.sceneOrder = names;
+      showToast(nextIdx < 0 ? 'Moved to the end of the day' : `Moved ahead of ${names[nextIdx + 1]}`);
+      return;
+    }
     for(let k = 0; k < 8; k++){
       const diff = newMin - item.startMin;
       if(!diff) break;
@@ -8560,6 +8588,11 @@ function openScheduleModal(project, step, sideRight){
     bg.querySelectorAll('[data-parallel]').forEach(el => el.addEventListener('change', () => {
       const d = days[parseInt(el.dataset.parallel,10)];
       if(el.value === 'yes') d.parallel = true; else if(el.value === 'no') d.parallel = false; else delete d.parallel;
+      paint(); persistSchedule();
+    }));
+    bg.querySelectorAll('[data-movescene]').forEach(btn => btn.addEventListener('click', () => {
+      const { dayIdx, scene } = parseSceneKey(btn.dataset.movescene);
+      moveScene(days[dayIdx], scene, parseInt(btn.dataset.dir, 10));
       paint(); persistSchedule();
     }));
     bg.querySelectorAll('[data-shooter]').forEach(el => el.addEventListener('change', () => {
